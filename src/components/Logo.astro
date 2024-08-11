@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import LogoImage from "@/assets/logo.svg";
+import LogoImage from "@/assets/yar.jpg";
 import { useTranslations } from "@/i18n";
 
 const t = useTranslations();
@@ -12,4 +12,5 @@ const t = useTranslations();
   widths={[40, 80]}
   sizes={`(max-width: 640px) 40px, 80px`}
   loading="eager"
+  class="rounded-full"
 />
