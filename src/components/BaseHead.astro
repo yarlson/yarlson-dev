@@ -5,9 +5,8 @@ import { ViewTransitions } from "astro:transitions";
 import "@fontsource/onest";
 import { SEO } from "astro-seo";
 import { getEntry, type CollectionEntry } from "astro:content";
-import Favicon from "@/assets/favicon.svg";
+import Favicon from "@/assets/yar.jpg";
 import { getImage } from "astro:assets";
-import Analytics from "./Analytics.astro";
 
 interface Props {
   title: string;
@@ -137,6 +136,5 @@ const isProduction = import.meta.env.PROD;
       }),
     }}
   />
-  {isProduction && <Analytics />}
   <ViewTransitions />
 </head>

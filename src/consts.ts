@@ -5,14 +5,8 @@
  */
 export const SITE_METADATA = {
   theme: "system", // Options: system, light, dark
-  siteUrl: "https://tasb.yon.fun/",
-  siteRepo: "https://github.com/wanoo21/tailwind-astro-starting-blog",
+  siteUrl: "https://yar.fluctum.com/",
   robots: "index, follow", // Options: index, noindex, follow, nofollow
-
-  // These are not supported yet
-  analytics: {
-    googleAnalyticsId: null, // Add your Google Analytics id here
-  },
 };
 
 /**
