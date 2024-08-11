@@ -25,3 +25,7 @@ input:-webkit-autofill:focus {
     background-color 600000s 0s,
     color 600000s 0s;
 }
+
+.copy-code {
+  @apply absolute top-0 right-0 bg-gray-900 px-2 py-1 rounded-md text-xs text-gray-100 transition-all duration-150 hover:bg-gray-700;
+}
