@@ -1,0 +1,394 @@
+---
+title: "Leveraging Go 1.22 Iterators in CLI Applications"
+summary: "Go 1.22 introduces built-in support for iterators, providing a memory-efficient and composable way to handle data streams. This post explains how to use these iterators in CLI applications, complete with code examples and best practices."
+postLayout: simple
+date: "2024-10-26"
+tags:
+  - go
+---
+
+Go 1.22 brings a significant enhancement to the language with the introduction of built-in support for iterators through the new `iter` package. This feature simplifies the way we handle data streams, making our applications more efficient and easier to maintain. In this post, we'll explore how to use these iterators in CLI applications, providing step-by-step guidance and code examples.
+
+## Understanding Go 1.22 Iterators
+
+### Core Concepts
+
+- **Iterator Functions**: Functions that yield values one at a time using the `yield` mechanism.
+- **Iterator Types**:
+  - `iter.Seq[T]`: For single-value sequences.
+  - `iter.Seq2[T1, T2]`: For sequences of pairs, such as `(value, error)`.
+
+### Basic Iterator Structure
+
+#### Single-Value Iterator
+
+```go
+import "iter"
+
+func MyIterator() iter.Seq[T] {
+    return func(yield func(T) bool) {
+        // Generate values
+        for {
+            value := // ... compute value
+            if !yield(value) {
+                return // Stop if consumer doesn't need more data
+            }
+        }
+    }
+}
+```
+
+#### Two-Value Iterator (e.g., for Error Handling)
+
+```go
+func MyIteratorWithError() iter.Seq2[T, error] {
+    return func(yield func(T, error) bool) {
+        // Generate values with error handling
+        for {
+            value, err := // ... compute value and error
+            if !yield(value, err) {
+                return // Stop if consumer doesn't need more data
+            }
+        }
+    }
+}
+```
+
+## Implementing Iterators in CLI Applications
+
+### Scenario: Long-Running Task with Periodic Output
+
+We want to create a CLI application that performs a long-running task and outputs status messages at intervals.
+
+### Step 1: Define the Event Types
+
+Create a struct to represent different types of events that the iterator will yield.
+
+```go
+type EventType string
+
+const (
+    EventTypeStart  EventType = "start"
+    EventTypeUpdate EventType = "update"
+    EventTypeEnd    EventType = "end"
+    EventTypeError  EventType = "error"
+)
+
+type TaskEvent struct {
+    Type    EventType
+    Message string
+}
+```
+
+### Step 2: Create the Iterator Function
+
+Implement the iterator that simulates a long-running task.
+
+```go
+import (
+    "fmt"
+    "iter"
+    "time"
+)
+
+func TaskEventStream() iter.Seq[*TaskEvent] {
+    return func(yield func(*TaskEvent) bool) {
+        // Start event
+        if !yield(&TaskEvent{
+            Type:    EventTypeStart,
+            Message: "Task started",
+        }) {
+            return
+        }
+
+        // Simulate long-running task with periodic updates
+        for i := 1; i <= 5; i++ {
+            time.Sleep(2 * time.Second) // Simulate work
+
+            // Update event
+            if !yield(&TaskEvent{
+                Type:    EventTypeUpdate,
+                Message: fmt.Sprintf("Task progress: %d%%", i*20),
+            }) {
+                return
+            }
+        }
+
+        // End event
+        if !yield(&TaskEvent{
+            Type:    EventTypeEnd,
+            Message: "Task completed",
+        }) {
+            return
+        }
+    }
+}
+```
+
+### Step 3: Consume the Iterator in `main`
+
+Use the iterator in your CLI application to process and display events.
+
+```go
+func main() {
+    fmt.Println("Starting the CLI application...")
+
+    for event := range TaskEventStream() {
+        switch event.Type {
+        case EventTypeStart:
+            fmt.Println("Start:", event.Message)
+        case EventTypeUpdate:
+            fmt.Println("Update:", event.Message)
+        case EventTypeEnd:
+            fmt.Println("End:", event.Message)
+        case EventTypeError:
+            fmt.Println("Error:", event.Message)
+            // Handle error appropriately
+        }
+    }
+
+    fmt.Println("CLI application has finished.")
+}
+```
+
+## Handling Errors Gracefully
+
+Modify the iterator to include error handling using `iter.Seq2`.
+
+### Updated Iterator with Error Handling
+
+```go
+func TaskEventStreamWithError() iter.Seq2[*TaskEvent, error] {
+    return func(yield func(*TaskEvent, error) bool) {
+        // Start event
+        if !yield(&TaskEvent{
+            Type:    EventTypeStart,
+            Message: "Task started",
+        }, nil) {
+            return
+        }
+
+        // Simulate task with possible error
+        for i := 1; i <= 5; i++ {
+            time.Sleep(2 * time.Second)
+
+            // Simulate an error at 60%
+            if i == 3 {
+                if !yield(nil, fmt.Errorf("an error occurred at %d%% progress", i*20)) {
+                    return
+                }
+                continue
+            }
+
+            // Update event
+            if !yield(&TaskEvent{
+                Type:    EventTypeUpdate,
+                Message: fmt.Sprintf("Task progress: %d%%", i*20),
+            }, nil) {
+                return
+            }
+        }
+
+        // End event
+        if !yield(&TaskEvent{
+            Type:    EventTypeEnd,
+            Message: "Task completed",
+        }, nil) {
+            return
+        }
+    }
+}
+```
+
+### Updated `main` Function
+
+```go
+func main() {
+    fmt.Println("Starting the CLI application with error handling...")
+
+    for event, err := range TaskEventStreamWithError() {
+        if err != nil {
+            fmt.Println("Error:", err)
+            continue // Decide whether to continue or exit
+        }
+
+        switch event.Type {
+        case EventTypeStart:
+            fmt.Println("Start:", event.Message)
+        case EventTypeUpdate:
+            fmt.Println("Update:", event.Message)
+        case EventTypeEnd:
+            fmt.Println("End:", event.Message)
+        }
+    }
+
+    fmt.Println("CLI application has finished.")
+}
+```
+
+## Benefits of Using Go 1.22 Iterators
+
+1. **Memory Efficiency**: Processes one event at a time without loading all data into memory.
+2. **On-Demand Computation**: Generates events as needed, improving performance.
+3. **Simplified Error Handling**: Easily manage errors within the iterator.
+4. **Composable**: Chain iterators together for complex data processing.
+5. **Early Termination**: Stop the iterator when no longer needed, saving resources.
+
+## Full Code Example
+
+Below is the complete `main.go` code that incorporates everything we've discussed, including error handling.
+
+```go
+// main.go
+
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+// EventType represents the type of event.
+type EventType string
+
+const (
+	EventTypeStart  EventType = "start"
+	EventTypeUpdate EventType = "update"
+	EventTypeEnd    EventType = "end"
+	EventTypeError  EventType = "error"
+)
+
+// TaskEvent represents an event during the execution of a task.
+type TaskEvent struct {
+	Type    EventType
+	Message string
+}
+
+type TaskEventIterator func(yield func(*TaskEvent, error) bool)
+
+// TaskEventStreamWithError returns an iterator over *TaskEvent and error.
+// It simulates a long-running task that yields events over time.
+func TaskEventStreamWithError() TaskEventIterator {
+	return func(yield func(*TaskEvent, error) bool) {
+		// Start event
+		if !yield(&TaskEvent{
+			Type:    EventTypeStart,
+			Message: "Task started",
+		}, nil) {
+			return
+		}
+
+		// Simulate task with possible error
+		for i := 1; i <= 5; i++ {
+			time.Sleep(2 * time.Second)
+
+			// Simulate an error at 60%
+			if i == 3 {
+				if !yield(nil, fmt.Errorf("an error occurred at %d%% progress", i*20)) {
+					return
+				}
+				continue
+			}
+
+			// Update event
+			if !yield(&TaskEvent{
+				Type:    EventTypeUpdate,
+				Message: fmt.Sprintf("Task progress: %d%%", i*20),
+			}, nil) {
+				return
+			}
+		}
+
+		// End event
+		if !yield(&TaskEvent{
+			Type:    EventTypeEnd,
+			Message: "Task completed",
+		}, nil) {
+			return
+		}
+	}
+}
+
+func main() {
+	fmt.Println("Starting the CLI application with error handling...")
+
+	for event, err := range TaskEventStreamWithError() {
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue // Decide whether to continue or exit
+		}
+
+		switch event.Type {
+		case EventTypeStart:
+			fmt.Println("Start:", event.Message)
+		case EventTypeUpdate:
+			fmt.Println("Update:", event.Message)
+		case EventTypeEnd:
+			fmt.Println("End:", event.Message)
+		case EventTypeError:
+			fmt.Println("Error:", event.Message)
+		default:
+			fmt.Println("Unknown event type:", event.Type)
+		}
+	}
+
+	fmt.Println("CLI application has finished.")
+}
+```
+
+### Explanation of the Code
+
+- **Imports**:
+  - `fmt`: For formatted I/O operations.
+  - `iter`: The new iterator package introduced in Go 1.22.
+  - `time`: To simulate delays with `Sleep`.
+
+- **Event Types and Struct**:
+  - `EventType`: An enum-like type representing event types.
+  - `TaskEvent`: A struct containing the event type and message.
+
+- **Iterator Function**:
+  - `TaskEventStreamWithError`: Yields events and handles errors.
+  - Uses `iter.Seq2[*TaskEvent, error]` to yield `(event, error)` pairs.
+
+- **Main Function**:
+  - Consumes the iterator using a `for` loop with `range`.
+  - Handles errors and processes events based on their type.
+
+### Running the Program
+
+To run the program:
+
+1. Ensure you have Go 1.22 installed and set up properly.
+2. Save the code in a file named `main.go`.
+3. Open a terminal and navigate to the directory containing `main.go`.
+4. Execute the program with the command:
+
+   ```bash
+   go run main.go
+   ```
+
+### Expected Output
+
+```
+Starting the CLI application with error handling...
+Start: Task started
+Update: Task progress: 20%
+Update: Task progress: 40%
+Error: an error occurred at 60% progress
+Update: Task progress: 80%
+Update: Task progress: 100%
+End: Task completed
+CLI application has finished.
+```
+
+Each message will appear approximately every 2 seconds, demonstrating that the program processes and prints each event as it becomes available.
+
+## Conclusion
+
+The introduction of iterators in Go 1.22 provides a powerful tool for building efficient CLI applications. By yielding events one at a time, you can handle long-running tasks gracefully, manage resources effectively, and keep your application responsive.
+
+## Further Reading
+
+- [Go 1.22 Release Notes](https://golang.org/doc/go1.22)
+- [Effective Go](https://golang.org/doc/effective_go)
