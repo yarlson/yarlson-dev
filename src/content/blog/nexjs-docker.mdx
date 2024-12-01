@@ -28,7 +28,7 @@ Here's what the `next.config.mjs` should look like:
 ```javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'standalone',
+  output: "standalone",
 };
 
 export default nextConfig;
@@ -183,6 +183,7 @@ http {
 ```
 
 This configuration:
+
 - Sets up an upstream server for the NextJS app.
 - Configures handling for different types of requests.
 - Sets up caching and performance optimizations.
@@ -217,6 +218,7 @@ networks:
 ```
 
 This compose file:
+
 - Defines two services: the NextJS app and Nginx.
 - Sets up a network for them to communicate.
 - Exposes port 80 for incoming web traffic.
