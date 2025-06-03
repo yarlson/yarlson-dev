@@ -6,6 +6,7 @@ date: "2025-06-03"
 tags:
   - git
 ---
+
 I never planned to build yet another dotfiles manager, I just got fed up. Between bouncing between machines and losing track of my config tweaks, I realized something had to change. Enter Lnk: a Git-native, minimalistic tool that handles dotfiles the way they should be handled, simple, reliable, and completely unobtrusive.
 
 ## Why I Made Lnk
@@ -14,10 +15,10 @@ Ever spent 30 minutes hunting down where you stashed your `~/.vimrc` on a freshl
 
 So one Saturday, fueled by coffee and frustration, I fired up my IDE and sketched out a design:
 
-* **Move files safely** into a centralized repo.
-* **Create portable, relative symlinks** so nothing breaks if you clone somewhere else.
-* **Support host-specific overrides** without forcing you to juggle dozens of branches.
-* **Run bootstrap scripts** automatically when you clone or update.
+- **Move files safely** into a centralized repo.
+- **Create portable, relative symlinks** so nothing breaks if you clone somewhere else.
+- **Support host-specific overrides** without forcing you to juggle dozens of branches.
+- **Run bootstrap scripts** automatically when you clone or update.
 
 A few evenings later, Lnk was born. It wasn’t rocket science, it’s just Git plus symlinks plus a little bootstrap magic. But that combination solved all the headaches I’d been dealing with for years.
 
@@ -74,7 +75,7 @@ That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk i
 
 ### 1. Initialize Your Dotfiles Repo
 
-* **With no remote** (start from scratch):
+- **With no remote** (start from scratch):
 
   ```bash
   lnk init
@@ -82,7 +83,7 @@ That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk i
 
   This simply sets up your local repo in `~/.config/lnk`.
 
-* **Clone an existing repo** (and run bootstrap):
+- **Clone an existing repo** (and run bootstrap):
 
   ```bash
   lnk init -r git@github.com:you/dotfiles.git
@@ -90,7 +91,7 @@ That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk i
 
   Lnk clones your dotfiles straight into `~/.config/lnk` and, if it finds a `bootstrap.sh`, kicks off your machine setup automatically.
 
-* **Skip bootstrap** (if you want to run it later):
+- **Skip bootstrap** (if you want to run it later):
 
   ```bash
   lnk init -r git@github.com:you/dotfiles.git --no-bootstrap
@@ -98,7 +99,7 @@ That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk i
 
 ### 2. Add Files to Be Managed
 
-* **Common config** (shared across all machines):
+- **Common config** (shared across all machines):
 
   ```bash
   lnk add ~/.vimrc ~/.bashrc ~/.gitconfig
@@ -106,7 +107,7 @@ That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk i
 
   Lnk moves each file into `~/.config/lnk`, commits it to Git, and leaves a symlink at the original path. Edit `~/.vimrc` as if nothing changed, Lnk keeps things transparent.
 
-* **Host-specific config** (machine-specific overrides):
+- **Host-specific config** (machine-specific overrides):
 
   ```bash
   lnk add --host work ~/.ssh/config ~/.tmux.conf
@@ -148,7 +149,7 @@ That executes `bootstrap.sh` inside your dotfiles repo, installing packages, set
 
 ## A Few Tips & Tricks
 
-* **Check status quickly:**
+- **Check status quickly:**
 
   ```bash
   lnk status
@@ -156,7 +157,7 @@ That executes `bootstrap.sh` inside your dotfiles repo, installing packages, set
 
   Just like `git status`, but friendly to your symlinks. It tells you what’s changed locally and if you’re ahead/behind your remote.
 
-* **List managed files:**
+- **List managed files:**
 
   ```bash
   lnk list         # common only
@@ -166,7 +167,7 @@ That executes `bootstrap.sh` inside your dotfiles repo, installing packages, set
 
   Handy when you forget exactly which files Lnk is tracking.
 
-* **Remove a file:**
+- **Remove a file:**
 
   ```bash
   lnk rm ~/.vimrc
@@ -180,10 +181,12 @@ You might be thinking, “Why not just clone a bare repo and run a few symlinks 
 
 Lnk solves that by:
 
-* **Abstracting away boilerplate.** You don’t need to memorize platform-specific quirks, Lnk’s got you covered.
-* **Keeping everything relative.** Move your dotfiles folder anywhere (home, `~/Documents`, even an external drive), and Lnk’s symlinks still work.
-* **Providing host isolation.** Your office workstation’s secrets stay separate from your home laptop’s quirks.
+- **Abstracting away boilerplate.** You don’t need to memorize platform-specific quirks, Lnk’s got you covered.
+- **Keeping everything relative.** Move your dotfiles folder anywhere (home, `~/Documents`, even an external drive), and Lnk’s symlinks still work.
+- **Providing host isolation.** Your office workstation’s secrets stay separate from your home laptop’s quirks.
 
 Ever had someone ask “How do I sync my dotfiles?” and you began a ten-minute explanation of merging branches? With Lnk, you can say, “Just `lnk init` on a new box,” and be done before they finish their coffee.
 
 Whether you bounce between Linux, macOS, or even Windows Subsystem for Linux, Lnk unifies your workflow. It’s not perfect, there’s always room for new features, but it does one thing really well: giving you a rock-solid way to manage dotfiles across any machine. Give it a try, and get those config headaches out of your life.
+
+You can find Lnk on GitHub: [https://github.com/yarlson/lnk](https://github.com/yarlson/lnk)
