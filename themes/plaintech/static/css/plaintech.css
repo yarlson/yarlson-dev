@@ -227,6 +227,13 @@ h3 {
   display: block;
   white-space: pre;
 }
+.post-content pre code.language-markdown,
+.post-content pre code[data-lang="markdown"] {
+  /* Wrap markdown code blocks to avoid horizontal scrolling */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .post-content :is(h2, h3) {
   margin-top: 2.25rem;
 }
