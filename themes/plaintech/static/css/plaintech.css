@@ -298,6 +298,70 @@ h3 {
   margin: 2rem 0;
 }
 
+/* About page */
+.about-hero {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  align-items: start;
+  margin: 1.5rem 0 2.5rem;
+}
+.about-hero > * {
+  align-self: start;
+}
+.about-left {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  text-align: center;
+  gap: 1rem;
+}
+.about-right {
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-top: -1em;
+}
+.about-name {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.25rem);
+}
+.avatar-lg {
+  width: clamp(180px, 24vw, 260px);
+  height: clamp(180px, 24vw, 260px);
+  border-radius: 1rem;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  filter: grayscale(100%);
+}
+.about-left .links {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  gap: 1rem;
+}
+.about-left .links a {
+  color: var(--fg);
+  display: inline-flex;
+}
+.about-right .about-bio {
+  max-width: 60ch;
+}
+.latest-posts {
+  margin-top: 2rem;
+}
+.latest-posts h2 {
+  font-size: clamp(1.4rem, 1rem + 1.5vw, 1.8rem);
+}
+.latest-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
 /* Better focus visibility */
 a:focus-visible {
   outline: 2px solid var(--accent);

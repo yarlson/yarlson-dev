@@ -1,0 +1,1 @@
+Place site-wide static assets here. e.g. /assets/yar.jpg

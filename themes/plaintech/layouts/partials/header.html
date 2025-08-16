@@ -6,12 +6,9 @@
     </div>
     <nav class="site-nav" role="navigation" aria-label="Primary">
       <ul>
-        <li><a href="{{ "/" | relURL }}">Home</a></li>
-        {{ with site.Menus.main }}
-        {{ range . }}
-        <li><a href="{{ .URL }}">{{ .Name }}</a></li>
-        {{ end }}
-        {{ end }}
+        <li><a href="{{ "/" | relURL }}">Blog</a></li>
+        <li><a href="{{ "/tags/" | relURL }}">Tags</a></li>
+        <li><a href="{{ "/about/" | relURL }}">About</a></li>
       </ul>
     </nav>
   </div>
