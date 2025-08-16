@@ -3,7 +3,7 @@
   --fg: #0b0c0d;
   --muted: #4b5563; /* darker for contrast */
   --link: #0b5fff;
-  --link-visited: #5c3dff; /* tweak for contrast */
+  --link-visited: #0b5fff; /* tweak for contrast */
   --card: #f3f4f6;
   --border: #d1d5db;
   --accent: #0077ff; /* stronger accent */
@@ -15,7 +15,7 @@
     --fg: #e7eaf0;
     --muted: #a5adba; /* brighter muted */
     --link: #74b0ff; /* brighter for contrast */
-    --link-visited: #b1a7ff;
+    --link-visited: #74b0ff;
     --card: #111318;
     --border: #2a3441;
     --accent: #60a5fa; /* stronger accent */
@@ -72,7 +72,6 @@ a:visited {
 
 .container {
   max-width: 70ch;
-  padding: 0 1rem;
   margin: 0 auto;
 }
 .skip-link {
@@ -100,30 +99,58 @@ a:visited {
   position: sticky;
   top: 0;
   backdrop-filter: saturate(180%) blur(10px);
-  background: color-mix(in oklab, var(--bg) 85%, transparent);
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
 }
 .header-inner {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 0;
+  padding: 1rem 0;
+  min-height: 72px;
 }
 .site-title {
-  font-weight: 700;
-  font-size: clamp(1.1rem, 0.9rem + 0.8vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-size: clamp(1.6rem, 1rem + 3.2vw, 3.2rem);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 .tagline {
   margin: 0.25rem 0 0;
   color: var(--muted);
   font-size: 0.95rem;
 }
+.site-avatar {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  filter: grayscale(100%);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  min-height: 56px;
+}
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
 .site-nav ul {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .site-footer {
@@ -448,15 +475,4 @@ a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 0.125rem;
-}
-
-@media (min-width: 48rem) {
-  .header-inner {
-    align-items: center;
-  }
-  .brand {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-  }
 }

@@ -1,9 +1,26 @@
 <header class="site-header" role="banner">
   <div class="container header-inner">
-    <div class="brand">
-      <a class="site-title" href="{{ "/" | relURL }}">{{ site.Title }}</a>
-      {{ with site.Params.tagline }}<p class="tagline">{{ . }}</p>{{ end }}
-    </div>
+    {{/* Resolve avatar: prefer About page param; fallback to site param */}}
+    {{ $avatar := site.Params.avatar }}
+    {{ with site.GetPage "/about" }}
+      {{ with .Params.avatar }}{{ $avatar = . }}{{ end }}
+    {{ end }}
+
+    <a class="brand" href="{{ "/" | relURL }}">
+      {{ if $avatar }}
+        {{- $src := "" -}}
+        {{- if (strings.HasPrefix $avatar "/assets/") -}}
+          {{- with resources.Get (strings.TrimPrefix "/assets/" $avatar) -}}
+            {{- $src = .RelPermalink -}}
+          {{- end -}}
+        {{- else -}}
+          {{- $src = ($avatar | relURL) -}}
+        {{- end -}}
+        <span class="brand-icon" aria-hidden="true"><img class="site-avatar" src="{{ $src }}" alt="" loading="lazy" decoding="async" /></span>
+      {{ end }}
+      <span class="site-title">{{ site.Title }}</span>
+    </a>
+
     <nav class="site-nav" role="navigation" aria-label="Primary">
       <ul>
         <li><a href="{{ "/" | relURL }}">Blog</a></li>
