@@ -1,0 +1,18 @@
+<header class="site-header" role="banner">
+  <div class="container header-inner">
+    <div class="brand">
+      <a class="site-title" href="{{ "/" | relURL }}">{{ site.Title }}</a>
+      {{ with site.Params.tagline }}<p class="tagline">{{ . }}</p>{{ end }}
+    </div>
+    <nav class="site-nav" role="navigation" aria-label="Primary">
+      <ul>
+        <li><a href="{{ "/" | relURL }}">Home</a></li>
+        {{ with site.Menus.main }}
+        {{ range . }}
+        <li><a href="{{ .URL }}">{{ .Name }}</a></li>
+        {{ end }}
+        {{ end }}
+      </ul>
+    </nav>
+  </div>
+</header>

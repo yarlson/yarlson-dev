@@ -1,0 +1,11 @@
+{{ define "title" }}{{ .Title }} | {{ site.Title }}{{ end }}
+{{ define "main" }}
+<section aria-labelledby="terms-title">
+  <h1 id="terms-title">{{ .Title }}</h1>
+  <ul role="list">
+    {{ range .Data.Terms.Alphabetical }}
+      <li><a href="{{ .Page.RelPermalink }}">{{ .Page.Title }}</a> ({{ .Count }})</li>
+    {{ end }}
+  </ul>
+</section>
+{{ end }}

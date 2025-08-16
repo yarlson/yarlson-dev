@@ -1,0 +1,12 @@
+<footer class="site-footer" role="contentinfo">
+  <div class="container footer-inner">
+    <p>© {{ now.Year }} {{ site.Title }}</p>
+    {{ with site.Params.social }}
+    <ul class="social">
+      {{ range . }}
+      <li><a href="{{ .url }}">{{ .name }}</a></li>
+      {{ end }}
+    </ul>
+    {{ end }}
+  </div>
+</footer>

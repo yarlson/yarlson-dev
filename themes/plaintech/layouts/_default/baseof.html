@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>{{ block "title" . }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
+  {{ with .Description }}<meta name="description" content="{{ . }}" />{{ end }}
+  {{ with site.Params.author }}<meta name="author" content="{{ . }}" />{{ end }}
+  <link rel="stylesheet" href="{{ "/css/plaintech.css" | absURL }}" />
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  {{ partial "header.html" . }}
+  <main id="content" class="container" role="main">
+    {{ block "main" . }}{{ end }}
+  </main>
+  {{ partial "footer.html" . }}
+</body>
+</html>

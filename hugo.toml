@@ -1,0 +1,4 @@
+baseURL = 'https://yarlson.dev/'
+languageCode = 'en-us'
+title = "Yar Kravtsov's Blog"
+theme = 'plaintech'
