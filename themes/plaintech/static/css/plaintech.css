@@ -1,25 +1,25 @@
 :root {
   --bg: #ffffff;
-  --fg: #0c0c0d;
-  --muted: #6b7280;
+  --fg: #0b0c0d;
+  --muted: #4b5563; /* darker for contrast */
   --link: #0b5fff;
-  --link-visited: #6a38ff;
-  --card: #f7f7f8;
-  --border: #e5e7eb;
-  --accent: #0ea5e9;
-  --code-bg: #f4f4f5;
+  --link-visited: #5c3dff; /* tweak for contrast */
+  --card: #f3f4f6;
+  --border: #d1d5db;
+  --accent: #0077ff; /* stronger accent */
+  --code-bg: #f1f5f9; /* slate-50 */
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0b0c10;
-    --fg: #e5e7eb;
-    --muted: #9aa0aa;
-    --link: #61a7ff;
-    --link-visited: #a69bff;
+    --fg: #e7eaf0;
+    --muted: #a5adba; /* brighter muted */
+    --link: #74b0ff; /* brighter for contrast */
+    --link-visited: #b1a7ff;
     --card: #111318;
-    --border: #1f2937;
-    --accent: #38bdf8;
-    --code-bg: #111217;
+    --border: #2a3441;
+    --accent: #60a5fa; /* stronger accent */
+    --code-bg: #1b1f27; /* deeper to contrast text */
   }
 }
 
@@ -214,6 +214,7 @@ h3 {
   font-size: 0.95em;
   line-height: 1.5;
   position: relative;
+  color: var(--fg);
 }
 .post-content :not(pre) > code {
   font-family: var(--font-mono), monospace;
@@ -230,6 +231,11 @@ h3 {
   border-radius: 0;
   display: block;
   white-space: pre;
+  color: inherit;
+}
+.post-content pre span {
+  color: inherit !important;
+  background: transparent !important;
 }
 .post-content pre code.language-markdown,
 .post-content pre code[data-lang="markdown"] {
