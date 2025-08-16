@@ -7,5 +7,5 @@ authors = [
   {name = "Yar Kravtsov", homepage = "https://yarlson.dev"}
 ]
 # Tags and features help discovery in theme galleries
-keywords = ["blog", "technical", "minimal", "no-js", "dark-mode", "accessibility"]
-features = ["blog", "taxonomy", "responsive", "dark-mode", "no-js"]
+keywords = ["blog", "technical", "minimal", "dark-mode", "accessibility"]
+features = ["blog", "taxonomy", "responsive", "dark-mode"]

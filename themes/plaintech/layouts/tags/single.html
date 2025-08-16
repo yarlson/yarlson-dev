@@ -1,0 +1,19 @@
+{{ define "title" }}{{ .Params.name | default .Title | default .File.BaseFileName }} | {{ site.Title }}{{ end }}
+{{ define "main" }}
+<section aria-labelledby="tag-title">
+  <h1 id="tag-title">{{ .Params.name | default .Title | default .File.BaseFileName }}</h1>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  {{ $key := .File.BaseFileName }}
+  {{ $posts := where .Site.RegularPages "Params.tags" "intersect" (slice $key) }}
+  <ul class="post-list" role="list">
+    {{ range $posts }}
+    <li>
+      <article class="post-card">
+        <h2 class="post-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        {{ with .Summary }}<p class="summary">{{ . }}</p>{{ end }}
+      </article>
+    </li>
+    {{ end }}
+  </ul>
+</section>
+{{ end }}

@@ -5,7 +5,7 @@
     <h1 itemprop="headline">{{ .Title }}</h1>
     <p class="muted">
       <time datetime="{{ .Date.Format "2006-01-02" }}" itemprop="datePublished">{{ .Date.Format "Jan 2, 2006" }}</time>
-      {{ with .Params.tags }}· {{ range $i, $t := . }}{{ if $i }}, {{ end }}<a class="tag" href="{{ (site.GetPage (printf "/tags/%s" $t)).RelPermalink }}">#{{ $t }}</a>{{ end }}{{ end }}
+      {{ with .Params.tags }}· {{ range $i, $t := . }}{{ if $i }}, {{ end }}<a class="tag" href="{{ (site.GetPage (printf "/tags/%s" $t)).RelPermalink }}">{{ $t }}</a>{{ end }}{{ end }}
     </p>
   </header>
   <section class="post-content prose" itemprop="articleBody">
