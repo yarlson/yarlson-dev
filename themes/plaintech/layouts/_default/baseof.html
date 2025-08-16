@@ -5,9 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>{{ block "title" . }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
-  {{ with .Description }}<meta name="description" content="{{ . }}" />{{ end }}
+  {{/* Build a robust meta description: page.description → page summary → site param */}}
+  {{- $desc := "" -}}
+  {{- with .Params.description -}}
+    {{- $desc = (. | plainify | truncate 160) -}}
+  {{- else -}}
+    {{- if .IsPage -}}
+      {{- $desc = (.Summary | plainify | truncate 160) -}}
+    {{- else -}}
+      {{- with site.Params.description -}}{{- $desc = (. | plainify | truncate 160) -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $desc }}<meta name="description" content="{{ $desc }}" />{{ end -}}
   {{ with site.Params.author }}<meta name="author" content="{{ . }}" />{{ end }}
   <link rel="stylesheet" href="{{ "/css/plaintech.css" | absURL }}" />
+  {{/* Canonical URL */}}
+  {{ if .Params.canonical }}
+    <link rel="canonical" href="{{ .Params.canonical }}" />
+  {{ else }}
+    <link rel="canonical" href="{{ .Permalink }}" />
+  {{ end }}
+  {{/* Open Graph / Twitter */}}
+  {{- $title := printf "%s | %s" .Title site.Title -}}
+  {{- $url := .Permalink -}}
+  {{- $type := cond .IsPage "article" "website" -}}
+  {{- $img := or .Params.image .Params.featuredImage site.Params.ogImage -}}
+  <meta property="og:title" content="{{ $title }}" />
+  {{ if $desc }}<meta property="og:description" content="{{ $desc }}" />{{ end }}
+  <meta property="og:type" content="{{ $type }}" />
+  <meta property="og:url" content="{{ $url }}" />
+  <meta property="og:site_name" content="{{ site.Title }}" />
+  {{ with $img }}<meta property="og:image" content="{{ . | absURL }}" />{{ end }}
+  <meta name="twitter:card" content="{{ if $img }}summary_large_image{{ else }}summary{{ end }}" />
+  <meta name="twitter:title" content="{{ $title }}" />
+  {{ if $desc }}<meta name="twitter:description" content="{{ $desc }}" />{{ end }}
+  {{ with $img }}<meta name="twitter:image" content="{{ . | absURL }}" />{{ end }}
   <script defer src="{{ "/js/copycode.js" | absURL }}"></script>
 </head>
 <body>
