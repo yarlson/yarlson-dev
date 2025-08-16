@@ -226,17 +226,14 @@ h3 {
   font-family: var(--font-mono), monospace;
 }
 .post-content pre code {
-  background: none;
+  background: none; /* let Hugo highlighter style colors */
   padding: 0;
   border-radius: 0;
   display: block;
   white-space: pre;
   color: inherit;
 }
-.post-content pre span {
-  color: inherit !important;
-  background: transparent !important;
-}
+
 .post-content pre code.language-markdown,
 .post-content pre code[data-lang="markdown"] {
   /* Wrap markdown code blocks to avoid horizontal scrolling */
@@ -418,7 +415,7 @@ h3 {
   height: 16px;
   background: currentColor;
   -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>')
-    no-repeat center / contain;
+    no-repeat center;
   mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>')
     no-repeat center / contain;
 }
@@ -435,7 +432,7 @@ h3 {
 }
 .copy-btn.copied::before {
   -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>')
-    no-repeat center / contain;
+    no-repeat center;
   mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>')
     no-repeat center / contain;
 }

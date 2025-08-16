@@ -1,8 +1,10 @@
-{{/* Render hook for fenced code blocks */}}
+{{/* Render hook for fenced code blocks with Hugo Chroma highlighting */}}
 {{- $lang := .Type | default "" -}}
+{{- $opts := .Options -}}
+{{- $highlighted := transform.Highlight .Inner $lang $opts -}}
 <div class="code-block" {{ with $lang }} data-lang="{{ . }}"{{ end }}>
   <button type="button" class="copy-btn" aria-label="Copy code" title="Copy code">
     <span class="copy-label">Copy</span>
   </button>
-  <pre><code{{ with $lang }} class="language-{{ . }}" data-lang="{{ . }}"{{ end }}>{{ .Inner | safeHTML }}</code></pre>
+  {{ $highlighted }}
 </div>

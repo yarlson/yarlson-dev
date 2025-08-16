@@ -2,3 +2,11 @@ baseURL = 'https://yarlson.dev/'
 languageCode = 'en-us'
 title = "Yar Kravtsov's Blog"
 theme = 'plaintech'
+
+[markup]
+  [markup.highlight]
+    style = 'dracula'
+    guessSyntax = true
+    lineNos = false
+    noClasses = true
+    tabWidth = 2
