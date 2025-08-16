@@ -1,0 +1,8 @@
+{{/* Render hook for fenced code blocks */}}
+{{- $lang := .Type | default "" -}}
+<div class="code-block" {{ with $lang }} data-lang="{{ . }}"{{ end }}>
+  <button type="button" class="copy-btn" aria-label="Copy code" title="Copy code">
+    <span class="copy-label">Copy</span>
+  </button>
+  <pre><code{{ with $lang }} class="language-{{ . }}" data-lang="{{ . }}"{{ end }}>{{ .Inner | safeHTML }}</code></pre>
+</div>
