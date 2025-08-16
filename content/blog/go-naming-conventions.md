@@ -2,7 +2,7 @@
 title: "Naming in Go: A Deep Dive into Function and Variable Conventions"
 summary: "A guide to Go naming conventions for functions and variables. Covers best practices for clarity, consistency, and idiomatic Go code to improve readability and maintainability."
 postLayout: simple
-date: "2023-02-12"
+date: "2024-02-12"
 tags:
   - go
 ---
