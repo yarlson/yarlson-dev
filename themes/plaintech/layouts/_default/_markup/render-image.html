@@ -1,0 +1,22 @@
+{{/*
+  Custom image render hook that normalizes relative image paths site-wide.
+  - If the markdown src is relative (e.g., ./images/foo.jpg or images/foo.jpg),
+    rewrite to "/<section>/<src>" so images placed under content/<section>/images/ work universally.
+  - Otherwise leave absolute and remote URLs untouched.
+*/}}
+{{- $src := .Destination -}}
+{{- $isRemote := or (strings.HasPrefix $src "http://") (strings.HasPrefix $src "https://") -}}
+{{- if not $isRemote -}}
+  {{- if strings.HasPrefix $src "/" -}}
+    {{/* Already absolute site path */}}
+  {{- else -}}
+    {{- $trimmed := strings.TrimPrefix "./" $src -}}
+    {{- $base := printf "/%s/" .Page.Section -}}
+    {{- $src = printf "%s%s" $base $trimmed -}}
+  {{- end -}}
+{{- end -}}
+
+<figure class="md-image">
+  <img src="{{ $src | relURL }}" alt="{{ .Text }}" {{ with .Title }}title="{{ . }}"{{ end }} loading="lazy" decoding="async" />
+  {{ with .Title }}<figcaption>{{ . }}</figcaption>{{ end }}
+</figure>
