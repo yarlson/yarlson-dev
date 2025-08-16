@@ -1,0 +1,48 @@
+{{/* OpenGraph + Twitter using dynamic PNG generation via Hugo image filters
+   - Requires assets/og_base.png and a font in assets (e.g., /Inter-SemiBold.ttf)
+   - For home: uses site description; for pages: uses page title
+   - Optional .Params.thumbnail (page resource) is overlaid top-right
+*/}}
+{{/* If base image missing or not an image, bail safely */}}
+{{ $base := resources.Get "og_base.png" }}
+{{ if and $base (eq $base.MediaType.Type "image/png") }}
+  {{ $img := $base }}
+  {{ $img = $img.Process "fill 1200x630" }}
+  {{ $text := $.Title }}
+  {{ if $.IsHome }}
+    {{ $text = (site.Params.description | default site.Title) }}
+  {{ end }}
+
+  {{ with $.Params.thumbnail }}
+    {{ $thumb := $.Resources.Get . }}
+    {{ with $thumb }}
+      {{ $img = $img.Filter (images.Overlay (.Process "fit 300x250") 875 38 )}}
+    {{ end }}
+  {{ end }}
+
+  {{ $img = $img.Filter (images.Text $text (dict
+    "color" "#000000"
+    "size" 64
+    "linespacing" 18
+    "x" 80
+    "y" 320
+  ))}}
+  {{ $img = $img.Filter (images.Text site.Title (dict
+    "color" "#000000"
+    "size" 48
+    "linespacing" 2
+    "x" 80
+    "y" 120
+  ))}}
+  {{ $img = resources.Copy (path.Join $.RelPermalink "og.png") $img }}
+  <meta property="og:image" content="{{$img.Permalink}}">
+  <meta property="og:image:width" content="{{$img.Width}}" />
+  <meta property="og:image:height" content="{{$img.Height}}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ $.Title }}" />
+  <meta name="twitter:description" content="{{ with $.Description }}{{ . }}{{ else }}{{if $.IsPage}}{{ $.Summary }}{{ else }}{{ with $.Site.Params.description }}{{ . }}{{ end }}{{ end }}{{ end -}}"/>
+  <meta name="twitter:image" content="{{$img.Permalink}}" />
+  <meta name="x-og-debug" content="generated: {{ $img.RelPermalink }} {{ $img.Width }}x{{ $img.Height }}" />
+{{ else }}
+  <meta name="x-og-debug" content="missing or invalid: assets/og_base.png; need 1200x630 PNG" />
+{{ end }}
