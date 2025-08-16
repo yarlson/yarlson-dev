@@ -1,0 +1,19 @@
+{{ define "title" }}Tags | {{ site.Title }}{{ end }}
+{{ define "main" }}
+<section aria-labelledby="tags-title">
+  <h1 id="tags-title">Tags</h1>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  <ul class="post-list" role="list">
+    {{ $tagPages := where .Site.RegularPages "Section" "tags" }}
+    {{ range sort $tagPages "Title" }}
+      {{ $title := (or .Params.name .Title .File.BaseFileName) }}
+      <li>
+        <article class="post-card">
+          <h2 class="post-title"><a href="{{ .RelPermalink }}">{{ $title }}</a></h2>
+          {{ with .Params.description }}<p class="summary">{{ . }}</p>{{ end }}
+        </article>
+      </li>
+    {{ end }}
+  </ul>
+</section>
+{{ end }}

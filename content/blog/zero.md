@@ -7,8 +7,6 @@ tags:
   - docker
 ---
 
-# Why I Created Zero: A Lightweight SSL Certificate Manager
-
 In the world of web development, securing your applications with SSL/TLS certificates is non-negotiable. Whether you're running a small personal project or a large-scale production application, ensuring that your users' data is encrypted and secure is paramount. However, managing SSL certificates can be a daunting task, especially when you're dealing with multiple domains, renewals, and the complexities of the ACME protocol.
 
 This is why I created **Zero**, a lightweight SSL certificate manager designed to simplify the process of obtaining, renewing, and managing SSL/TLS certificates. In this blog post, I'll walk you through the journey of why I built Zero, the challenges I faced, and why existing solutions didn't quite meet my needs.
