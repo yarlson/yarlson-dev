@@ -175,6 +175,7 @@ Let’s walk through a multi-container application where a web app communicates 
    - The web app connects to the database using `db:5432` or `primary-db:5432`.
 
 5. **Expose the web app to the host**:
+
    ```bash
    docker run -p 8080:5000 --network my-app-network --name webapp mywebapp
    ```

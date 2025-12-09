@@ -83,6 +83,7 @@ Hugo uses the same frontmatter format as VitePress, so most content files requir
 Instead of adapting an existing theme, I built a custom one from scratch. This gave me complete control over the HTML structure, CSS architecture, and feature set.
 
 The Plain Tech theme I created focuses on:
+
 - Semantic HTML5 structure
 - System fonts (no web font loading)
 - CSS custom properties for theming
@@ -130,12 +131,14 @@ The key insight is that "modern" doesn't always mean "better" for every use case
 ## Recommendations
 
 **Choose VitePress if:**
+
 - You need Vue component integration in content
 - Your site requires complex interactivity
 - You're building documentation with interactive examples
 - Your team is already Vue.js-focused
 
 **Choose Hugo if:**
+
 - Performance is a top priority
 - You want minimal JavaScript overhead
 - Build speed matters for your workflow

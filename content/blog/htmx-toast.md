@@ -17,14 +17,14 @@ Let’s build toast notifications with it, starting with **zero JavaScript** and
 
 ## Step 1 — Zero JS, pure HTMX + CSS
 
-HTMX can swap fragments of HTML into your page, even *outside* the normal target.
+HTMX can swap fragments of HTML into your page, even _outside_ the normal target.
 That’s the key to a clean, no-JS toast system.
 
 ```html
 <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
 
 <form hx-post="/save" hx-target="#result" hx-swap="innerHTML">
-  <input name="title" placeholder="Title">
+  <input name="title" placeholder="Title" />
   <button type="submit">Save</button>
 </form>
 
@@ -39,11 +39,13 @@ When the server handles `/save`, it responds with both the normal content **and*
 <p>Saved!</p>
 
 <div id="toasts" hx-swap-oob="true">
-  <div class="toast toast--ok"
-       hx-get="/_empty"
-       hx-trigger="load delay:4s"
-       hx-target="this"
-       hx-swap="outerHTML">
+  <div
+    class="toast toast--ok"
+    hx-get="/_empty"
+    hx-trigger="load delay:4s"
+    hx-target="this"
+    hx-swap="outerHTML"
+  >
     <strong>Saved</strong> — Changes stored.
   </div>
 </div>
@@ -56,9 +58,29 @@ No client-side timers, no event listeners, no JS.
 CSS does the slide and fade:
 
 ```css
-.toasts { position: fixed; right:1rem; bottom:1rem; display:flex; flex-direction:column; gap:.5rem; }
-.toast  { opacity:0; transform:translateY(8px); animation:toast-in .2s ease-out forwards; }
-@keyframes toast-in { from {opacity:0;transform:translateY(8px);} to {opacity:1;transform:none;} }
+.toasts {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.toast {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: toast-in 0.2s ease-out forwards;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 ```
 
 That’s the first 90 % done.
@@ -73,16 +95,22 @@ You can still do it server-side with the same `/ _empty` trick:
 
 ```html
 <div id="toasts" hx-swap-oob="true">
-  <div class="toast toast--ok"
-       hx-get="/_empty"
-       hx-trigger="load delay:4s"
-       hx-target="this"
-       hx-swap="outerHTML">
+  <div
+    class="toast toast--ok"
+    hx-get="/_empty"
+    hx-trigger="load delay:4s"
+    hx-target="this"
+    hx-swap="outerHTML"
+  >
     <div><strong>Saved</strong> — Changes stored.</div>
-    <button class="toast__close"
-            hx-get="/_empty"
-            hx-target="closest .toast"
-            hx-swap="outerHTML">&times;</button>
+    <button
+      class="toast__close"
+      hx-get="/_empty"
+      hx-target="closest .toast"
+      hx-swap="outerHTML"
+    >
+      &times;
+    </button>
   </div>
 </div>
 ```
@@ -99,11 +127,14 @@ If the `/ _empty` endpoint feels like an aesthetic crime, you can move logic to 
 ```html
 <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 
-<div class="toast toast--ok"
-     _="on load wait 4s then add .fading then wait 300ms then remove me">
+<div
+  class="toast toast--ok"
+  _="on load wait 4s then add .fading then wait 300ms then remove me"
+>
   <div><strong>Saved</strong> — Changes stored.</div>
-  <button class="toast__close"
-          _="on click remove closest .toast">&times;</button>
+  <button class="toast__close" _="on click remove closest .toast">
+    &times;
+  </button>
 </div>
 ```
 
@@ -124,29 +155,29 @@ Three lines of vanilla JS are enough:
 
 ```html
 <script>
-document.addEventListener('click', e => {
-  if (e.target.matches('.toast__close')) {
-    const t = e.target.closest('.toast');
-    t.classList.add('fading');
-    setTimeout(() => t.remove(), 250);
-  }
-});
+  document.addEventListener("click", (e) => {
+    if (e.target.matches(".toast__close")) {
+      const t = e.target.closest(".toast");
+      t.classList.add("fading");
+      setTimeout(() => t.remove(), 250);
+    }
+  });
 
-document.addEventListener('htmx:oobAfterSwap', e => {
-  const t = e.target.querySelector('.toast');
-  if (!t) return;
-  setTimeout(() => {
-    t.classList.add('fading');
-    setTimeout(() => t.remove(), 300);
-  }, 4000);
-});
+  document.addEventListener("htmx:oobAfterSwap", (e) => {
+    const t = e.target.querySelector(".toast");
+    if (!t) return;
+    setTimeout(() => {
+      t.classList.add("fading");
+      setTimeout(() => t.remove(), 300);
+    }, 4000);
+  });
 </script>
 ```
 
 That’s it.
 HTMX handles rendering; JS handles lifespan.
 No `/ _empty`, no Hyperscript, no runtime cost.
-It’s the pragmatic middle ground — the *“I’m still sane”* layer.
+It’s the pragmatic middle ground — the _“I’m still sane”_ layer.
 
 ---
 
@@ -176,7 +207,7 @@ Run `go run main.go`, open `localhost:8080`, and enjoy an HTML-native UI doing t
 ## Why this matters
 
 HTMX doesn’t reject JavaScript — it rejects unnecessary ceremony.
-It lets you build interactive systems that *start* from the server, not from a webpack build.
+It lets you build interactive systems that _start_ from the server, not from a webpack build.
 You can think in HTML again.
 
 Toasts are a small example, but they prove the point:
