@@ -1,6 +1,6 @@
 ---
-title: "CLI Design Principles for Production Systems"
-summary: "Practical rules for production-ready CLIs: TTY-aware behavior, clean stdout vs stderr contracts, JSON output for automation, idempotent mutations with dry-runs, actionable errors, sane config precedence, and sub-100ms startup times."
+title: "The Gold Standard: CLI Design Principles for Production Systems"
+summary: "Defining the 'Gold Standard' for production-ready CLIs: TTY-aware behavior, clean stdout vs stderr contracts, JSON output for automation, and idempotent mutations."
 postLayout: simple
 date: "2025-12-09"
 tags:
@@ -9,11 +9,13 @@ tags:
 
 Most internal tooling starts as a bash script hacked together during an outage. It evolves into a Python script, then eventually a compiled binary distributed to the entire engineering org.
 
-The problem is that most of these tools remain "scripts" at heart—fragile, unpredictable, and hostile to automation.
+The problem is that most of these tools remain "scripts" at heart—fragile, unpredictable, and hostile to automation. To fix this, high-velocity engineering organizations are converging on a rigorous set of design principles—a **Gold Standard** for CLI architecture.
 
 ## The Core Problem: Context Blindness
 
-Production CLIs serve two masters: the developer at a terminal and the script running in CI. Most tools optimize for one and break the other. The solution is TTY detection—your tool must know whether stdout is connected to a terminal or a pipe, then behave accordingly.
+Production CLIs serve two masters: the developer at a terminal and the script running in CI. Most tools optimize for one and break the other.
+
+The **Gold Standard** requires TTY detection—your tool must know whether stdout is connected to a terminal or a pipe, then behave accordingly.
 
 **Interactive (TTY detected):**
 
@@ -40,7 +42,7 @@ Always provide override flags (`--no-color`, `--force-color`) because auto-detec
 
 ## The "Return Value" Paradigm: Stdout as Data
 
-Traditional Unix philosophy says "silence is golden"—successful commands should produce no output. Modern CLIs need a different model: every command has a return value that belongs on stdout.
+Traditional Unix philosophy says "silence is golden"—successful commands should produce no output. The **Gold Standard** introduces a modern model: every command has a return value that belongs on stdout.
 
 **Stream contract:**
 
@@ -89,7 +91,7 @@ Forcing users to parse ASCII tables with `awk` is hostile design. We needed reso
 └──────────────┴─────────────┴────────┘
 ```
 
-Extracting IDs required fragile regex. With `--format json`:
+Extracting IDs required fragile regex. Under the **Gold Standard**, structured output is a requirement.
 
 ```bash
 cli list databases --format json | jq -r '.[].id'
@@ -117,7 +119,7 @@ cli create database db-prod-001
 
 The script sees exit code 1 and reports failure, even though the desired state exists.
 
-**Good (idempotent):**
+**The Gold Standard (idempotent):**
 
 ```bash
 cli create database db-prod-001
@@ -176,7 +178,7 @@ cli deploy
 Error: Invalid argument
 ```
 
-**Good:**
+**The Gold Standard:**
 
 ```
 Error: Unknown flag '--fource'
@@ -185,7 +187,7 @@ Did you mean '--force'?
 Usage: cli delete resource [flags]
   -f, --force    Skip confirmation prompt
 
-See: https://docs.example.com/cli/delete-resource
+See: [https://docs.example.com/cli/delete-resource](https://docs.example.com/cli/delete-resource)
 ```
 
 We reduced support tickets by 30% after implementing suggestion logic for typos and including documentation URLs in errors. Users need concrete next steps, not vague failure descriptions.
@@ -196,13 +198,13 @@ A CLI is part of the development feedback loop. If `cli --help` takes 2 seconds,
 
 **Trade-offs:**
 
-- Native binaries (Go, Rust) start in <50ms
+- Native binaries (Go, Rust) start in \<50ms
 - Python with heavy imports: 200-500ms
 - JVM-based tools: 500-2000ms
 
 For frequently used commands, startup latency compounds. If you must use a slow runtime, implement a daemon mode where the first invocation starts a background process and subsequent calls use IPC to the running daemon.
 
-For long-running operations, use optimistic UI—acknowledge the command immediately on stderr ("Request queued...") before the operation completes to prevent the appearance of a hung process.
+For long-running operations, use **Optimistic UI**—acknowledge the command immediately on stderr ("Request queued...") before the operation completes to prevent the appearance of a hung process.
 
 ## Standard Interface Patterns
 
@@ -237,7 +239,7 @@ Examples:
 
 **Simple mutation scripts:** If you're wrapping a single API call with no retry logic or state management, idempotency guarantees may be overkill.
 
-## Implementation Checklist
+## The Gold Standard Checklist
 
 - [ ] Detect TTY and adjust output accordingly
 - [ ] Separate stdout (data) from stderr (logs)
@@ -246,14 +248,14 @@ Examples:
 - [ ] Implement `--dry-run` for destructive actions
 - [ ] Use standard flag syntax (`-f`, `--force`)
 - [ ] Include "did you mean?" suggestions in errors
-- [ ] Follow configuration precedence: flags > env > files > defaults
-- [ ] Target <100ms startup time for interactive commands
+- [ ] Follow configuration precedence: flags \> env \> files \> defaults
+- [ ] Target \<100ms startup time for interactive commands
 - [ ] Provide `--yes` to skip interactive prompts in scripts
 - [ ] Return structured data on stdout for write operations
 - [ ] Show progress indicators only on stderr
 
 ## References
 
-- POSIX Utility Conventions: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+- POSIX Utility Conventions: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1\_chap12.html
 - 12-Factor CLI Apps: https://medium.com/@jdxcode/12-factor-cli-apps-dd3c227a0e46
 - TTY Detection in Go: `golang.org/x/term/isatty`
