@@ -7,18 +7,20 @@ tags:
   - go
 ---
 
-For a while, I was frustrated with existing CLI spinner libraries in Go—they either brought in too many dependencies or simply didn’t meet the needs of my projects. That’s why I built **pin**: a lightweight, dependency-free spinner library that does exactly what you need, without any extra fuss.
+I kept reaching for spinners in CLI tools and kept regretting it. Most of the libraries I tried were either heavier than I wanted for a tiny bit of terminal animation, or they made choices that didn't fit how I like my CLIs to behave.
+
+So I built `pin`.
 
 ## What is pin?
 
-`pin` is a simple terminal spinner for your CLI applications written in Go. It supports customizable spinner colors, text colors, prefixes, and even dynamic message updates. The goal was to create something minimal that leverages only the Go standard library, making it easy to integrate and maintain.
+`pin` is a small terminal spinner for Go CLI apps. You can change spinner and text colors, add a prefix, tweak separators, and update the message while it's running. The big constraint is intentional: it uses only the Go standard library. That keeps it easy to audit, easy to vendor, and less likely to surprise you later.
 
-## Key Features
+## Key features
 
-- **Customizable:** Easily adjust spinner colors, text colors, prefixes, separators, and more.
-- **Dynamic Updates:** Update the spinner message on the fly.
-- **Dependency-Free:** No third-party packages—just Go.
-- **Piped Output Handling:** Automatically disables animations when the output isn’t attached to a TTY (e.g., when using `./myapp | tee output.txt`), preventing control characters from cluttering your logs.
+- Configure spinner color, text color, prefix, separator, and other small formatting details.
+- Update the spinner message while work is in progress.
+- No third-party dependencies. Standard library only.
+- Detects when output is piped or redirected and disables animation so control characters don't end up in logs (for example: `./myapp | tee output.txt`).
 
 ## Installation
 
@@ -26,42 +28,38 @@ For a while, I was frustrated with existing CLI spinner libraries in Go—they e
 go get github.com/yarlson/pin
 ```
 
-## Quick Start
-
-Here’s a simple example to get you started:
+## Quick start
 
 ```go
 package main
 
 import (
-    "context"
-    "time"
+	"context"
+	"time"
 
-    "github.com/yarlson/pin"
+	"github.com/yarlson/pin"
 )
 
 func main() {
-    p := pin.New("Loading...",
-        pin.WithSpinnerColor(pin.ColorCyan),
-        pin.WithTextColor(pin.ColorYellow),
-    )
-    cancel := p.Start(context.Background())
-    defer cancel()
+	p := pin.New("Loading...",
+		pin.WithSpinnerColor(pin.ColorCyan),
+		pin.WithTextColor(pin.ColorYellow),
+	)
+	cancel := p.Start(context.Background())
+	defer cancel()
 
-    // Simulate work
-    time.Sleep(3 * time.Second)
+	// Simulate work
+	time.Sleep(3 * time.Second)
 
-    p.UpdateMessage("Almost done...")
-    time.Sleep(2 * time.Second)
+	p.UpdateMessage("Almost done...")
+	time.Sleep(2 * time.Second)
 
-    p.Stop("Done!")
+	p.Stop("Done!")
 }
 ```
 
-## Final Thoughts
+## Final thoughts
 
-If you’ve ever spent more time wrestling with a library than building your project, give **pin** a try. It’s a simple tool that just works—no extra dependencies, no unnecessary complexity, just what you need for your CLI applications.
+If you just want a spinner that looks decent, stays out of your way, and doesn't drag extra packages into a small CLI, `pin` is meant for that.
 
-Check out the source code and contribute on [GitHub](https://github.com/yarlson/pin).
-
-Happy coding!
+Source is on GitHub: [github.com/yarlson/pin](https://github.com/yarlson/pin). If you run into something awkward, issues and PRs are welcome.
