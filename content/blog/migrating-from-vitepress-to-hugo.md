@@ -5,144 +5,150 @@ postLayout: simple
 date: "2025-08-16"
 ---
 
-After running my blog on VitePress for over a year, I decided to migrate to Hugo with a custom theme. The decision wasn't driven by any major issues with VitePress, it's an excellent tool. Instead, it was about finding the right fit for my specific needs and workflow preferences.
+---
 
-## What I Liked About VitePress
+After a little over a year on VitePress, I moved this blog to Hugo and built a small custom theme along the way.
 
-VitePress served me well during my initial blogging phase. As a Vue.js-based static site generator, it offered several compelling features:
+This is not a breakup post. VitePress is genuinely excellent, and I still recommend it in the right context. The change was mostly about fit. I wanted the blog to behave like a simple content site again: fast HTML, minimal moving parts, and theming that feels closer to editing templates than maintaining an app.
 
-**Developer Experience**: The hot module replacement was incredibly fast. Making changes to content or styling felt instantaneous during development.
+## What I liked about VitePress
 
-**Markdown Extensions**: VitePress comes with powerful markdown extensions out of the box. Code blocks with syntax highlighting, custom containers, and Vue component integration made writing technical content enjoyable.
+VitePress made it very easy to get started and stay productive.
 
-**Modern Architecture**: Built on Vite, it leveraged modern JavaScript tooling and provided a clean, component-based approach to theming.
+The development loop is hard to beat. Vite's hot reload is instant enough that you stop thinking about it, which is exactly the point.
 
-**Vue Integration**: Being able to use Vue components directly in markdown was occasionally useful for interactive examples.
+Writing technical posts was also pleasant because the Markdown experience is rich out of the box: syntax highlighting, containers, and a bunch of conveniences that reduce friction when you're posting regularly.
 
-## The Pain Points That Led to Migration
+And since it sits on modern JS tooling, theming can be as component-y as you want it to be. On the occasions where I needed a little interactivity in a post, dropping a Vue component directly into Markdown was a nice escape hatch.
 
-Despite VitePress's strengths, several issues accumulated over time that made me reconsider:
+## The pain points that pushed me to migrate
 
-### 1. JavaScript Overhead for a Simple Blog
+Over time, a few small annoyances started to add up. None of them are "VitePress is bad" problems. They are "why am I paying this cost for a plain blog" problems.
 
-My blog is fundamentally a collection of technical articles. I don't need interactive features, complex state management, or client-side routing. Yet VitePress ships with a significant JavaScript bundle—even for the most basic blog setup.
+### 1. JavaScript overhead for a simple blog
 
-Every page load includes Vue runtime, router, and theme code. For readers on slower connections or mobile devices, this felt excessive for what is essentially static content.
+This site is basically a pile of articles. No user accounts. No dashboards. No in-browser state that needs to survive navigation.
 
-### 2. Theme Customization Complexity
+But the runtime cost still shows up. Even for a basic setup, you ship Vue runtime, routing, and theme code on every page. It's not outrageous in the grand scheme of the modern web, but it felt wasteful for static content, especially on mobile or slower connections.
 
-While VitePress themes are powerful, customizing them required deep Vue.js knowledge. Simple changes like adjusting typography or layout often meant diving into component hierarchies and understanding the theme's internal structure.
+I kept coming back to the same question: what am I getting from that JavaScript, day to day?
 
-I wanted something more straightforward—traditional HTML templates where I could see exactly what was being generated.
+### 2. Theme customization felt heavier than it needed to be
 
-### 3. Build Performance
+VitePress themes are flexible, but the path to "just change the layout a bit" often runs through Vue component hierarchies and theme internals.
 
-As my content grew, build times became noticeable. VitePress needed to process JavaScript modules, run Vue's compilation, and handle the bundling process. For a blog that updates infrequently, this felt like overkill.
+Some people love that. I didn't, at least not for a blog. I wanted to open a template and see the HTML I'm producing without having to mentally simulate a component tree.
 
-### 4. SEO and Performance Concerns
+### 3. Build performance started to matter
 
-While VitePress generates static files, the client-side hydration meant that initial page renders could feel sluggish. Search engines and social media crawlers sometimes struggled with JavaScript-heavy sites, even static ones.
+As the number of posts grew, builds became noticeable. Not painfully slow, but slow enough that I started thinking about it.
 
-## Why Hugo Made Sense
+VitePress is doing real work: bundling, compilation, module processing. For a site that changes occasionally, that started to feel like using a full frontend build pipeline to generate pages that end up static anyway.
 
-Hugo addressed every pain point I had with VitePress:
+### 4. SEO and perceived performance concerns
 
-### Zero JavaScript by Default
+VitePress outputs static files, but the experience still leans on client-side hydration. The site was fine, but the initial render could feel a bit "web-app-ish" for something that should be instant.
 
-Hugo generates pure HTML, CSS, and minimal JavaScript (only when explicitly added). My new blog loads instantly because there's no framework overhead, no hydration step, and no JavaScript bundle.
+Also, while modern crawlers have improved a lot, I prefer not to gamble on JavaScript-heavy rendering paths for indexing and previews if I don't need them.
 
-### Template Simplicity
+## Why Hugo made sense
 
-Hugo's Go templates are straightforward. When I see:
+Hugo lined up with what I actually wanted.
+
+### Zero JavaScript by default
+
+Hugo outputs plain HTML and CSS. If you add JavaScript, it's because you chose to.
+
+That alone changes the feel of the site. Pages load immediately, and there is no hydration step. The mental model is simple: the browser gets HTML, and it renders it.
+
+### Templates that are easy to reason about
+
+Go templates are not glamorous, but they are direct. When I write:
 
 ```html
 <h1>{{ .Title }}</h1>
 <time>{{ .Date.Format "Jan 2, 2006" }}</time>
 ```
 
-I know exactly what HTML will be generated. No component abstractions, no build-time transformations—just clear, predictable templating.
+I can predict the output without having to trace component props or lifecycle. That predictability was a big part of the appeal.
 
-### Build Speed
+### Build speed that is almost silly
 
-Hugo is famous for its build speed, and it delivers. My entire site builds in under 200ms. This makes the development workflow incredibly smooth and deployment nearly instantaneous.
+Hugo's reputation for speed is earned. My site builds in under 200ms.
 
-### Content-First Philosophy
+That changes workflow in a subtle way. You stop optimizing your habits around build times, because there is nothing to optimize.
 
-Hugo was designed specifically for content sites. Features like automatic RSS generation, sitemap creation, and taxonomy handling work out of the box without configuration.
+### A content-first default set
 
-## The Migration Process
+RSS, sitemaps, taxonomies, content organization: Hugo treats these as first-class features, not add-ons. You can build a "normal blog" without assembling a bunch of plugins or custom wiring.
 
-The actual migration was surprisingly straightforward:
+## The migration process
 
-### Content Migration
+I expected the migration to be annoying. It mostly wasn't.
 
-Hugo uses the same frontmatter format as VitePress, so most content files required minimal changes.
+### Content migration
 
-### Theme Development
+Frontmatter was close enough that most files moved over with minimal edits. A few formatting tweaks here and there, but nothing dramatic.
 
-Instead of adapting an existing theme, I built a custom one from scratch. This gave me complete control over the HTML structure, CSS architecture, and feature set.
+### Theme development
 
-The Plain Tech theme I created focuses on:
+Instead of adapting an existing theme, I built a small one from scratch so the site could be exactly what I wanted and nothing more.
 
-- Semantic HTML5 structure
-- System fonts (no web font loading)
+The theme (Plain Tech) is intentionally boring in the best sense:
+
+- semantic HTML5
+- system fonts (no web font loading)
 - CSS custom properties for theming
-- Progressive enhancement
-- Zero framework dependencies
+- progressive enhancement
+- no framework dependencies
 
-### Advanced Features
+### A few "nice to have" features that were easier than expected
 
-Hugo's template system made it easy to implement sophisticated features:
+Hugo's template system made it straightforward to add features that would have felt more involved in a JS-first setup:
 
-**Dynamic OpenGraph Images**: Using Hugo's image processing, every page generates a custom OpenGraph image with the post title overlaid on a base template.
+- Dynamic OpenGraph images using Hugo image processing, so each post gets a title card automatically.
+- Code block render hooks for copy-to-clipboard, while keeping the underlying markup clean.
+- Image render hooks to normalize relative paths, which helps when moving content around.
 
-**Code Block Enhancement**: Custom render hooks add copy-to-clipboard functionality to code blocks while maintaining semantic markup.
+## Performance results
 
-**Image Path Normalization**: A custom image render hook automatically resolves relative image paths, making content more portable.
+This was the part I cared about most, and it delivered:
 
-## Performance Results
+- Lighthouse: 100/100 across most metrics
+- First Contentful Paint: under 500ms
+- Largest Contentful Paint: under 800ms
+- Bundle size: about 10KB CSS + about 2KB JavaScript (versus 150KB+ with VitePress)
+- Build time: about 200ms (versus about 3 to 5 seconds with VitePress)
 
-The migration delivered significant performance improvements:
+## What I miss about VitePress
 
-- **Lighthouse Score**: 100/100 across most metrics
-- **First Contentful Paint**: Under 500ms
-- **Largest Contentful Paint**: Under 800ms
-- **Bundle Size**: ~10KB CSS + ~2KB JavaScript (vs ~150KB+ with VitePress)
-- **Build Time**: 200ms (vs ~3-5 seconds with VitePress)
+There are things VitePress still does better.
 
-## What I Miss About VitePress
+Vite's HMR is the gold standard. Hugo's live reload is quick, but it is not as seamless.
 
-To be fair, there are some VitePress features I occasionally miss:
+I also miss some of the Markdown niceties. Hugo's Markdown is solid, but more basic out of the box, so I had to recreate a few conveniences with shortcodes and render hooks.
 
-**Hot Module Replacement**: Hugo's live reload is fast, but not quite as seamless as Vite's HMR.
+And, broadly, the JavaScript ecosystem has a lot of developer tooling polish baked in. You can replicate most of it with Hugo, but you have to be more deliberate.
 
-**Markdown Extensions**: Hugo's markdown processing is more basic. I had to implement custom shortcodes for some features that VitePress handled automatically.
+## The right tool for the job
 
-**Modern Tooling**: The JavaScript ecosystem offers some conveniences (ESLint, Prettier integration, npm scripts) that Hugo's Go-based ecosystem doesn't match exactly.
+The main lesson for me was simple: I had built a small blog on top of a web-app stack, and I didn't actually want a web app.
 
-## The Right Tool for the Job
-
-This migration reinforced an important principle: choose tools based on your actual requirements, not potential future needs.
-
-VitePress is excellent for documentation sites that need interactive examples, component demonstrations, or complex navigation. But for a straightforward technical blog, Hugo's simplicity and performance are hard to beat.
-
-The key insight is that "modern" doesn't always mean "better" for every use case. Sometimes the most modern approach is to strip away unnecessary complexity and focus on fundamentals—fast loading, accessible HTML, and excellent content.
+VitePress is still a great choice for docs, component-driven content, and anything where interactivity is part of the point. For a straightforward technical blog, Hugo's approach feels calmer: fewer dependencies, fewer runtime costs, and templates that are easy to read.
 
 ## Recommendations
 
-**Choose VitePress if:**
+Choose VitePress if you need:
 
-- You need Vue component integration in content
-- Your site requires complex interactivity
-- You're building documentation with interactive examples
-- Your team is already Vue.js-focused
+- Vue components embedded in content
+- interactive examples and UI-heavy documentation
+- a team already deep in Vue and JS tooling
 
-**Choose Hugo if:**
+Choose Hugo if you want:
 
-- Performance is a top priority
-- You want minimal JavaScript overhead
-- Build speed matters for your workflow
-- You prefer traditional templating approaches
-- You're building a content-focused site
+- minimal JavaScript by default
+- fast builds and a simple deploy pipeline
+- traditional templating where the output is obvious
+- a content-focused site that stays out of your way
 
-Both tools are excellent in their domains. The migration wasn't about VitePress being inadequate—it was about finding the best fit for my specific needs and preferences.
+Both are good tools. This move was less about "better" and more about what I want this blog to be: readable pages that load instantly, and a codebase that feels like a website, not an application.
