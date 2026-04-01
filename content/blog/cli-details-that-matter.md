@@ -114,23 +114,23 @@ The fix is a truncation system that prioritizes files by size:
 
 ```typescript
 function truncateDiff(files: DiffFile[], maxTokens: number): TruncatedDiff {
-    // Sort files smallest first — preserve more whole files
-    const sorted = [...files].sort((a, b) => a.tokens - b.tokens);
+  // Sort files smallest first — preserve more whole files
+  const sorted = [...files].sort((a, b) => a.tokens - b.tokens);
 
-    let remaining = maxTokens;
-    const included: DiffFile[] = [];
-    const excluded: DiffFile[] = [];
+  let remaining = maxTokens;
+  const included: DiffFile[] = [];
+  const excluded: DiffFile[] = [];
 
-    for (const file of sorted) {
-        if (file.tokens <= remaining) {
-            included.push(file);
-            remaining -= file.tokens;
-        } else {
-            excluded.push(file);
-        }
+  for (const file of sorted) {
+    if (file.tokens <= remaining) {
+      included.push(file);
+      remaining -= file.tokens;
+    } else {
+      excluded.push(file);
     }
+  }
 
-    return { included, excluded, truncated: excluded.length > 0 };
+  return { included, excluded, truncated: excluded.length > 0 };
 }
 ```
 
