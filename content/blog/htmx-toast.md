@@ -1,5 +1,5 @@
 ---
-title: "Toasts with HTMX — the clean way to say "it worked""
+title: 'Toasts with HTMX — the clean way to say "it worked"'
 summary: "Build lightweight, reactive toast notifications without React, frameworks, or JavaScript bloat. A step-by-step guide to clean, declarative UI using HTMX, CSS, and a few honest lines of code."
 postLayout: simple
 date: "2025-10-20"
