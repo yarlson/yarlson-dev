@@ -1,5 +1,5 @@
 ---
-title: "Toasts with HTMX — the clean way to say “it worked”"
+title: "Toasts with HTMX — the clean way to say "it worked""
 summary: "Build lightweight, reactive toast notifications without React, frameworks, or JavaScript bloat. A step-by-step guide to clean, declarative UI using HTMX, CSS, and a few honest lines of code."
 postLayout: simple
 date: "2025-10-20"
@@ -7,18 +7,17 @@ tags:
   - web
 ---
 
-Frontend engineers love pain. Otherwise, I can’t explain React.
-For years, the simplest “Saved!” notification required a JS framework, a component library, a toast provider, and a 200-kB hydration blob.
+A "Saved!" notification. Green box, top-right corner, fades after four seconds. That's it. That's the entire feature.
 
-HTMX fixes that. It brings HTML back into the conversation — simple, declarative, and boring in the best possible way.
-Let’s build toast notifications with it, starting with **zero JavaScript** and climbing slowly (and reluctantly) toward three lines of JS.
+And yet, in 2025, the default answer is: install React, wire up a context provider, pull in a toast library, configure a portal, hydrate 200 kB of JavaScript, and pray your bundle analyzer doesn't make you cry. For a green box.
+
+Let's talk about what happens when you refuse to do that.
 
 ---
 
 ## Step 1 — Zero JS, pure HTMX + CSS
 
-HTMX can swap fragments of HTML into your page, even _outside_ the normal target.
-That’s the key to a clean, no-JS toast system.
+HTMX can swap fragments of HTML into your page, even _outside_ the normal target. Out-of-band swaps. This one feature is genuinely all you need.
 
 ```html
 <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
@@ -33,7 +32,7 @@ That’s the key to a clean, no-JS toast system.
 <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 ```
 
-When the server handles `/save`, it responds with both the normal content **and** an “out-of-band” toast fragment:
+When the server handles `/save`, it responds with both the normal content **and** an out-of-band toast fragment:
 
 ```html
 <p>Saved!</p>
@@ -51,11 +50,9 @@ When the server handles `/save`, it responds with both the normal content **and*
 </div>
 ```
 
-HTMX sees `hx-swap-oob="true"` and inserts this toast into the fixed container.
-Four seconds later it calls `/ _empty`, gets an empty body, and removes the toast.
-No client-side timers, no event listeners, no JS.
+HTMX sees `hx-swap-oob="true"` and drops the toast into your fixed container. Four seconds later it hits `/_empty`, gets an empty body, and the toast vanishes. No client-side timers. No event listeners. No JavaScript whatsoever.
 
-CSS does the slide and fade:
+CSS handles the entrance:
 
 ```css
 .toasts {
@@ -83,15 +80,13 @@ CSS does the slide and fade:
 }
 ```
 
-That’s the first 90 % done.
-If you’re fine with auto-dismiss only — stop here. You’ve already out-engineered most dashboards on the internet.
+That's 90% of the feature. Done. If auto-dismiss is all you need, stop reading. You've already shipped something better than most dashboards built with full component libraries. Seriously.
 
 ---
 
 ## Step 2 — A close button, still no JS
 
-Users like control. Let them close it manually.
-You can still do it server-side with the same `/ _empty` trick:
+But here's the thing — users like control. They want to swat that toast away before the timer runs out. Fair enough. You can still do it without a single line of JavaScript.
 
 ```html
 <div id="toasts" hx-swap-oob="true">
@@ -115,14 +110,13 @@ You can still do it server-side with the same `/ _empty` trick:
 </div>
 ```
 
-No scripts. HTMX replaces the element with nothing.
-It’s ridiculous and elegant at the same time.
+Click the button. HTMX replaces the element with nothing. The toast is gone. No scripts, no state management, no teardown logic. It's absurd how well this works.
 
 ---
 
 ## Step 3 — Hyperscript (client-side, still declarative)
 
-If the `/ _empty` endpoint feels like an aesthetic crime, you can move logic to the client without writing JS.
+Look, the `/_empty` endpoint works. But hitting your server with an HTTP request just to remove a DOM node? That starts to feel like an aesthetic crime after a while. If it bothers you — and it should, a little — Hyperscript lets you move the logic client-side without writing actual JavaScript.
 
 ```html
 <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
@@ -138,20 +132,17 @@ If the `/ _empty` endpoint feels like an aesthetic crime, you can move logic to 
 </div>
 ```
 
-That line reads like English, and for once that’s not an insult:
+Read that `_` attribute out loud:
 
-> on load → wait 4 s → fade → wait 300 ms → remove me
+> on load, wait 4 seconds, then add .fading, then wait 300 ms, then remove me
 
-Hyperscript is nice when you want declarative behavior without reaching for a framework.
-No webpack, no `import React`, no special runtime.
-Just markup.
+It reads like English. And for once, that's not an insult. No webpack. No `import React`. No special runtime beyond a small script tag. Just markup that describes its own behavior. Declarative UI is a superpower.
 
 ---
 
 ## Step 4 — The three-line JS version
 
-Eventually you realise: a 6 kB Hyperscript import for two timers is overkill.
-Three lines of vanilla JS are enough:
+Eventually you stare at that 6 kB Hyperscript import and ask yourself: am I really pulling in a dependency for two timers? You are not. Three lines of vanilla JS finish the job.
 
 ```html
 <script>
@@ -174,16 +165,13 @@ Three lines of vanilla JS are enough:
 </script>
 ```
 
-That’s it.
-HTMX handles rendering; JS handles lifespan.
-No `/ _empty`, no Hyperscript, no runtime cost.
-It’s the pragmatic middle ground — the _“I’m still sane”_ layer.
+HTMX handles the rendering. JavaScript handles the lifespan. No `/_empty` endpoint, no Hyperscript, no runtime cost worth measuring. This is the pragmatic layer — the one where you stop optimizing for purity and start optimizing for sanity.
 
 ---
 
 ## Step 5 — The backend (Go, naturally)
 
-If you want to see it live:
+Why wouldn't it be Go? Here's the whole server:
 
 ```go
 http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -200,22 +188,12 @@ http.HandleFunc("/save", func(w http.ResponseWriter, r *http.Request) {
 })
 ```
 
-Run `go run main.go`, open `localhost:8080`, and enjoy an HTML-native UI doing the job modern stacks need megabytes to attempt.
+Run `go run main.go`, open `localhost:8080`, and watch an HTML-native UI do the job that modern stacks need megabytes to attempt.
 
 ---
 
-## Why this matters
+So what did we actually build here? A toast system that starts at zero JavaScript and tops out at three lines. Four progressively honest approaches, each one trading a tiny bit of purity for a tiny bit of pragmatism. The server sends HTML. The browser renders HTML. Nobody had to negotiate with a bundler.
 
-HTMX doesn’t reject JavaScript — it rejects unnecessary ceremony.
-It lets you build interactive systems that _start_ from the server, not from a webpack build.
-You can think in HTML again.
+HTMX doesn't reject JavaScript. It rejects ceremony. It lets you think in HTML again, build from the server outward, and reach for JS only when the alternative is genuinely worse. A minimal toolchain doesn't mean a minimal experience. It means you ship faster, sleep better, and never have to debug a toast provider's context boundary at 2 AM.
 
-Toasts are a small example, but they prove the point:
-a minimal toolchain doesn’t mean a minimal experience.
-It just means you ship faster and sleep better.
-
----
-
-HTMX isn’t nostalgia.
-It’s what happens when the pendulum finally swings back from frontend maximalism.
-A bit of HTML, a sprinkle of CSS, and, fine, three lines of JavaScript — because life is short and `/_empty` is ugly.
+A bit of HTML, a sprinkle of CSS, and — fine — three lines of JavaScript. Because `/_empty` is ugly and life is short.

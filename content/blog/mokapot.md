@@ -7,26 +7,30 @@ tags:
   - go
 ---
 
-Every team I've worked with that uses AWS has the same problem: running integration tests against real SQS and SNS is slow, costs money, and requires credentials that don't belong on a developer's laptop. The usual answer is LocalStack, which works but pulls in Docker, Python, and a runtime that takes 30 seconds to start. For my projects I just needed queues and topics — not the entire AWS ecosystem.
+LocalStack weighs forty megabytes, pulls in Docker and Python, and takes thirty seconds to spin up so you can send a message to a fake queue. Thirty seconds. For a queue.
 
-So I built [mokapot](https://github.com/yarlson/mokapot): a single Go binary that implements the SQS and SNS wire protocols well enough that standard AWS SDKs (Go, Node.js, PHP, Python) connect to `localhost:4566` without credentials or configuration changes.
+I kept watching teams go through the same ritual: wire up LocalStack in Docker Compose, wait for it to boot, pray the container doesn't OOM during the test run, and then wonder why CI takes eleven minutes. All anyone actually needed was SQS and SNS. Two services. Not the entire AWS catalog.
 
-## What "Well Enough" Means
+So I built [mokapot](https://github.com/yarlson/mokapot): a single Go binary that implements the SQS and SNS wire protocols well enough that standard AWS SDKs — Go, Node.js, PHP, Python — connect to `localhost:4566` without credentials or configuration changes. No Docker. No Python runtime. No existential dread.
 
-The goal was never feature parity with AWS. It was protocol compliance with the operations that matter for development and testing:
+## What "Well Enough" Actually Means
+
+Let's talk about scope. The goal was never feature parity with AWS. Feature parity is a trap. The goal was protocol compliance with the operations that matter for development and testing:
 
 - **SQS**: create/delete/list queues, send/receive/delete messages, long polling, visibility timeouts, delay queues, dead-letter queues with redrive, batch operations, message attributes, purge with cooldown
 - **SNS**: create/delete/list topics, subscribe/unsubscribe, publish with fanout to SQS, raw message delivery, subscription attributes, filter policies
 
-Mokapot speaks both the AWS Query/XML and JSON 1.0 protocols. This matters because different SDK versions use different serialization formats — the Go SDK v2 uses JSON, while older SDKs use Query strings. If you only implement one, half your team's tests break.
+But here's the thing most mock authors miss: mokapot speaks both the AWS Query/XML and JSON 1.0 protocols. Why does this matter? Because the Go SDK v2 uses JSON while older SDKs use Query strings. Implement only one and half your team's tests break silently. Not with loud failures. With subtle serialization mismatches that waste an afternoon.
 
 ## The Persistence Problem
 
-A mock that loses its state on restart is a mock you restart once and then stop using. The first version of mokapot was in-memory only. It worked for unit tests but was useless as a development dependency — you'd set up your queues, kill the process for lunch, and come back to nothing.
+A mock that loses state on restart is a mock you use once. The first version was in-memory only. Worked fine for unit tests. Genuinely useless as a development dependency — you'd set up your queues, kill the process for lunch, come back to nothing.
 
-Adding persistence sounds simple: serialize state to disk periodically. The catch is that mokapot has two independent engines (SQS and SNS) that reference each other. When SNS publishes a message, it fans out to SQS subscriptions. If you snapshot SQS and SNS at different moments, you can capture a state where a message has been delivered to the queue but not yet removed from the topic's in-flight tracking — or vice versa.
+Adding persistence sounds simple. Serialize state to disk periodically. Done. Right?
 
-The solution uses bbolt (an embedded key-value store) with both engines snapshotting under a shared lock:
+Not quite. Mokapot has two independent engines — SQS and SNS — that reference each other. When SNS publishes a message, it fans out to SQS subscriptions. Snapshot them at different moments and you capture a state where a message exists in the queue but not in the topic's in-flight tracking. Or vice versa. Split-brain persistence. The kind of bug that only shows up on Fridays.
+
+The solution uses bbolt with both engines snapshotting under a shared lock:
 
 ```go
 func (app *App) saveState() error {
@@ -43,17 +47,19 @@ func (app *App) saveState() error {
 }
 ```
 
-The `Lock()`/`Unlock()`/`SnapshotLocked()` methods were added specifically to support atomic cross-engine snapshots. Each engine already had internal locking for concurrent request handling. The public lock methods expose a higher-level coordination point that the persistence layer uses to prevent split-brain state.
+The `Lock()`/`Unlock()`/`SnapshotLocked()` methods exist specifically for atomic cross-engine snapshots. Each engine already had internal locking for concurrent request handling. The public lock methods expose a higher-level coordination point that the persistence layer uses. Two locks. One transaction. Consistent state.
 
-The BoltStore abstraction itself is deliberately simple — two named buckets, each holding a single JSON blob. It doesn't know anything about SQS or SNS. This means the same pattern would work for any pair of interdependent state machines that need atomic persistence.
+The BoltStore abstraction itself is deliberately dumb — two named buckets, each holding a single JSON blob. It knows nothing about SQS or SNS. This means the same pattern works for any pair of interdependent state machines that need atomic persistence. Boring infrastructure is a superpower.
 
-## Filter Policies: The Surprisingly Complex Part
+## Filter Policies: Where the Complexity Hides
 
-AWS SNS filter policies let subscribers receive only messages matching certain criteria. It sounds like a simple feature until you read the spec: exact string match, numeric comparisons (`=`, `>`, `>=`, `<`, `<=`), `exists`/`not-exists`, `anything-but` (for both strings and numbers), `prefix` matching, AND across attributes, OR across conditions within an attribute.
+AWS SNS filter policies let subscribers receive only messages matching certain criteria. Sounds like a weekend feature. Then you read the spec.
 
-I considered skipping filter policies entirely. Then I wrote a test that depended on them and realized they're not optional — any real SNS integration uses them.
+Exact string match. Numeric comparisons — equals, greater than, greater-than-or-equal, less than, less-than-or-equal. `exists` and `not-exists`. `anything-but` for both strings and numbers. `prefix` matching. AND logic across attributes. OR logic across conditions within an attribute.
 
-The implementation is a standalone parser and evaluator in `internal/sns/filter.go`:
+I considered skipping filter policies entirely. Then I wrote one test that depended on them and realized something uncomfortable: any real SNS integration uses them. They're not a nice-to-have. They're load-bearing.
+
+The implementation lives as a standalone parser and evaluator in `internal/sns/filter.go`:
 
 ```go
 type filterPolicy map[string][]condition
@@ -65,47 +71,42 @@ type condition struct {
 }
 ```
 
-Policies are parsed eagerly when `SetSubscriptionAttributes` is called, so invalid policies fail fast rather than silently misbehaving at publish time. Each `Publish` call evaluates the parsed policy against message attributes. The file is 308 lines of Go with 384 lines of tests — more test than implementation, which feels right for something that needs to match AWS behavior exactly.
+Policies are parsed eagerly when `SetSubscriptionAttributes` is called — invalid policies fail fast rather than silently misbehaving at publish time. Each `Publish` call evaluates the parsed policy against message attributes. The file is 308 lines of Go with 384 lines of tests. More test than implementation. That ratio feels exactly right for something that needs to match AWS behavior down to the edge cases.
 
-The decision to keep this as an isolated file paid off immediately. When I found edge cases in the numeric comparison logic, I could fix and test them without touching the SNS engine at all.
+Keeping this as an isolated file paid off immediately. When I found numeric comparison bugs, I could fix and test them without touching the SNS engine at all. Isolation is a superpower.
 
-## Proving Compliance: Multi-Language Test Suites
+## Proving Compliance the Hard Way
 
-Unit tests for the HTTP handlers are necessary but insufficient. The real question is: does a real AWS SDK, using its actual serialization and protocol negotiation, produce correct results against mokapot?
+Unit tests for HTTP handlers are necessary but insufficient. How do you actually know a real AWS SDK, using its actual serialization and protocol negotiation, produces correct results against your mock?
 
-I wrote integration test suites in three languages:
+You test with the real SDKs. In multiple languages. There's no shortcut.
 
-- **Go** — using the official AWS SDK v2
-- **Node.js** — using `@aws-sdk/client-sqs` and `@aws-sdk/client-sns` with Jest
-- **PHP** — using `aws/aws-sdk-php` with PHPUnit
+I wrote integration suites in three languages:
 
-Each suite covers the full lifecycle: create queues/topics, send and receive messages, batch operations, visibility timeouts, dead-letter queues, long polling, SNS publish with fanout, filter policies, and raw delivery. That's over 650 lines per language.
+- **Go** — official AWS SDK v2
+- **Node.js** — `@aws-sdk/client-sqs` and `@aws-sdk/client-sns` with Jest
+- **PHP** — `aws/aws-sdk-php` with PHPUnit
 
-This is where most mock implementations fall down. They test their own HTTP handler against hand-crafted requests, which tells you the handler works but not that real SDKs produce those exact requests. The SDK serialization layer is where the actual compatibility bugs hide — field ordering, URL encoding differences, header casing.
+Each suite covers the full lifecycle: create queues and topics, send and receive messages, batch operations, visibility timeouts, dead-letter queues, long polling, SNS publish with fanout, filter policies, raw delivery. Over 650 lines per language.
 
-Running the test suites against a real AWS account (with appropriate credentials) produces the same results as running them against mokapot. That's the bar I set for "actually works."
+Look, this is where most mock implementations quietly fall apart. They test their own HTTP handler against hand-crafted requests. That tells you the handler works. It tells you nothing about whether real SDKs produce those exact requests. The SDK serialization layer — field ordering, URL encoding differences, header casing — is where the actual compatibility bugs hide.
+
+Running these suites against a real AWS account produces the same results as running them against mokapot. That's the bar. Not "it handles the happy path." Not "it doesn't crash." Same results.
 
 ## What I'd Do Differently
 
-The main limitation right now is the single-bucket persistence model. Each engine serializes its entire state as one JSON blob. For development use with a few dozen queues, this is fine. For anything approaching production scale (not mokapot's goal, but people will try), incremental persistence would be better.
+The main limitation is the single-bucket persistence model. Each engine serializes its entire state as one JSON blob. For development use with a few dozen queues, this is fine. For anything approaching production scale — not mokapot's goal, but people will try — incremental persistence would be better.
 
-I'd also consider adding DynamoDB support. It's the third most common "I need this locally" AWS service, and the wire protocol is well-documented. But that's a different project.
+I'd also consider adding DynamoDB support. It's the third most common "I need this locally" AWS service, and the wire protocol is well-documented. But that's a different binary for a different day.
 
-## When to Use This Instead of LocalStack
+## When to Reach for This
 
-Use mokapot when:
+Use mokapot when you only need SQS and SNS, when you want a single binary with zero dependencies, when startup time matters (under 50ms), when you don't want Docker running just so your tests can enqueue a message.
 
-- You only need SQS and SNS
-- You want a single binary with zero dependencies
-- Startup time matters (mokapot starts in under 50ms)
-- You don't want Docker running for local development
+Use LocalStack when you need the broader AWS surface area — S3, DynamoDB, Lambda — or when exact API parity including error codes matters, or when your team is already invested in the LocalStack ecosystem.
 
-Use LocalStack when:
+For my own projects, mokapot replaced a LocalStack Docker Compose setup that took thirty seconds to start and occasionally crashed. The single binary starts instantly and hasn't lost state once since persistence landed.
 
-- You need multiple AWS services (S3, DynamoDB, Lambda, etc.)
-- You need exact API parity including error codes
-- Your team is already invested in the LocalStack ecosystem
+A 6MB Go binary that boots in 50 milliseconds, speaks two wire protocols, survives restarts, and passes the same integration suites as actual AWS. Sometimes the best infrastructure is the kind you forget is running.
 
-For my own projects, mokapot replaced a LocalStack Docker Compose setup that took 30 seconds to start and occasionally crashed. The single binary starts instantly and hasn't lost state once since I added persistence.
-
-You can find mokapot on GitHub: [https://github.com/yarlson/mokapot](https://github.com/yarlson/mokapot). Install with Homebrew (`brew install yarlson/tap/mokapot`) or grab the binary from the releases page.
+Mokapot is on GitHub: [https://github.com/yarlson/mokapot](https://github.com/yarlson/mokapot). Install with Homebrew (`brew install yarlson/tap/mokapot`) or grab the binary from the releases page.

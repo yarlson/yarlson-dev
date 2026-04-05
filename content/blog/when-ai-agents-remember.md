@@ -8,19 +8,21 @@ tags:
   - go
 ---
 
-I've been building tools that let AI coding agents work autonomously — not just autocomplete a function, but plan a feature, implement it with tests, review their own code, fix issues, and commit. The two tools at the center of this work are [lgtm](https://github.com/yarlson/lgtm) and [snap](https://github.com/yarlson/snap). Both went through rapid development over the past month, and the biggest lesson wasn't about prompts or models. It was about memory.
+AI coding agent demos all look the same. Feed it a task, watch it autocomplete, applaud. But hand it a second task that depends on the first? It forgets everything. The model that just figured out your test runner will blunder into the wrong command again three minutes later like nothing happened.
+
+I've been building [lgtm](https://github.com/yarlson/lgtm) and [snap](https://github.com/yarlson/snap) — tools that let agents plan features, implement them with tests, review their own code, fix issues, and commit. The biggest lesson wasn't about prompts or models. It was about memory. A flat file. Genuinely the simplest thing in the entire stack. And it changed everything.
 
 ## The Stateless Agent Problem
 
-The first version of lgtm was essentially a loop: read the PRD, break it into tasks, hand each task to Claude Code, verify the result, commit if it passes. It worked — for about two tasks. By task three, the agent would make the same mistake it made on task one. Wrong test command. Wrong import path. An architectural pattern that had already been tried and rejected.
+The first version of lgtm was a loop: read the PRD, break it into tasks, hand each one to Claude Code, verify the result, commit if it passes. Worked great for about two tasks. By task three, the agent was making the exact same mistake it made on task one. Wrong test command. Wrong import path. An architectural pattern already tried and rejected.
 
-The issue is obvious in hindsight. Each task started with a blank slate. The agent had no way to know what it had learned five minutes ago.
+Why? Because each task started with a blank slate. The agent had zero access to what it learned five minutes ago. This is the default state of every agentic workflow people are shipping right now, and nobody talks about it.
 
 ## Persistent Findings: A Project Memory File
 
-The fix was a file called `findings.md` that lives in `.lgtm/` and accumulates knowledge across the entire run. After each task — whether it succeeds or fails — the system writes what it discovered: which test patterns work, which verification commands are correct, which architectural constraints exist.
+Look, the fix is embarrassingly simple. A file called `findings.md` that lives in `.lgtm/` and accumulates knowledge across the entire run. After each task — success or failure — the system writes what it discovered. Which test patterns work. Which verification commands are correct. Which architectural constraints exist.
 
-Here's the key: findings aren't just logged, they're injected into the planner and implementer prompts for every subsequent task. The agent reads its own history before starting new work.
+But here's the thing: findings aren't just logged. They're injected into the planner and implementer prompts for every subsequent task. The agent reads its own history before touching new work.
 
 ```go
 // Before planning the next task, load accumulated findings
@@ -30,21 +32,23 @@ if err == nil {
 }
 ```
 
-This single change transformed lgtm from a tool that repeated mistakes into one that improved over the course of a project.
+One file. One concatenation. That single change transformed lgtm from a tool that repeated mistakes into one that genuinely improved over the course of a project.
 
 ## The Compaction Problem
 
-There's an obvious issue with appending findings forever: the file grows, and eventually it fills the context window with redundant information. "Always use `go test ./...` instead of `go test`" doesn't need to appear fourteen times.
+Appending findings forever has an obvious failure mode: the file bloats, the context window fills with redundant garbage, and "Always use `go test ./...` instead of `go test`" shows up fourteen times like a broken mantra.
 
 The solution is AI-powered self-compaction. When `findings.md` exceeds 8KB, lgtm feeds it back through the LLM with instructions to merge duplicates, remove superseded entries, and keep only actionable rules. The compacted output replaces the original file.
 
-This is a design I hadn't seen elsewhere: using the same LLM that generates findings to periodically compress them. It works because the compaction task is genuinely simpler than the coding task — the model is merging structured text, not reasoning about code. The 8KB threshold was chosen to keep findings well within a single prompt's useful context. After compaction, the file typically shrinks by half.
+Using the same LLM that generates findings to periodically compress them — I hadn't seen this pattern elsewhere. It works because compaction is genuinely simpler than coding. The model is merging structured text, not reasoning about logic. The 8KB threshold keeps findings well within a single prompt's useful context. After compaction, the file typically shrinks by half.
+
+Self-compacting memory is a superpower.
 
 ## Shared Context: Explore Once, Use Everywhere
 
-A related problem showed up when I looked at how many tokens each task was consuming. The decomposer, implementer, reviewer, and fixer were all independently exploring the codebase — reading the same files, building the same mental model, burning the same tokens.
+Let's talk about token waste. When I profiled how many tokens each task consumed, the numbers were absurd. The decomposer, implementer, reviewer, and fixer were all independently exploring the codebase — reading the same files, building the same mental model, burning the same tokens. Four phases doing the same work. Four times the cost.
 
-The fix was an explicit explorer phase that runs once at the start of a session. It produces `static.md`, a snapshot of the codebase's architecture, key files, and patterns. Every subsequent phase reads from this shared context instead of exploring independently.
+The fix is an explicit explorer phase that runs once at session start. It produces `static.md`, a snapshot of the codebase's architecture, key files, and patterns. Every subsequent phase reads from this shared context instead of exploring on its own.
 
 ```
 Session start
@@ -55,11 +59,11 @@ Session start
       └─ Fixer reads static.md + feedback → fixes
 ```
 
-On top of the static context, the decomposer generates per-task `focus.md` files that narrow the scope to the specific files and patterns relevant to each task. The combination of broad static context plus narrow per-task focus gives each phase exactly the right amount of information without redundant exploration.
+On top of the static context, the decomposer generates per-task `focus.md` files that narrow scope to the specific files and patterns relevant to each task. Broad static context plus narrow per-task focus. Each phase gets exactly the right amount of information. No redundant exploration. No wasted tokens.
 
 ## Self-Recovery: Escaping Dead Ends
 
-Even with memory and shared context, agents get stuck. A partially implemented feature breaks tests, the fixer can't resolve it after three attempts, and the system enters an infinite retry loop.
+Even with memory and shared context, agents get stuck. A partially implemented feature breaks tests, the fixer flails for three attempts, and suddenly you're watching an infinite retry loop burn through your API budget. Sound familiar?
 
 The recovery mechanism in lgtm uses a `RecoverableError` type. When the implementer fails verification three times, instead of retrying forever, it:
 
@@ -67,35 +71,29 @@ The recovery mechanism in lgtm uses a `RecoverableError` type. When the implemen
 2. Resets the workspace (`git reset --hard` + `git clean`)
 3. Returns to the planner with the failure context
 
-The next planning attempt has the finding "Approach X failed because of Y" in its prompt. It plans differently.
+The next planning attempt has "Approach X failed because of Y" sitting right there in its prompt. It plans differently.
 
-This is the piece that makes autonomous operation actually work on real projects. Without it, a single difficult task blocks everything. With it, the system falls back, learns, and tries a different approach.
+This is the piece that makes autonomous operation actually viable on real projects. Without it, one difficult task blocks everything. With it, the system falls back, learns, and routes around the problem. Graceful failure isn't a nice-to-have — it's table stakes for anything that runs without a human babysitter.
 
 ## Closing the Loop: From Commit to Merged PR
 
-In snap, the same philosophy extends past implementation into the delivery pipeline. After all tasks complete, a postrun phase takes over:
+Here's where most autonomous coding tools stop: code committed locally. Great. Now what? You still have to push, open the PR, watch CI, fix whatever CI catches that local tests missed. That last mile is where snap takes over.
+
+After all tasks complete, a postrun phase kicks in:
 
 1. **Auto-push** — detects the remote, pushes the branch
 2. **PR creation** — calls Claude to generate a title and description from the commit history, opens the PR via `gh`
 3. **CI monitoring** — polls GitHub Actions for workflow status, showing a live summary of passing and failing checks
 4. **Auto-fix** — if CI fails, fetches the logs (kept in memory, never written to disk), feeds them to Claude, commits the fix, and pushes again. Up to 10 retries.
 
-The CI auto-fix loop is particularly interesting because it creates a feedback cycle between the test environment and the agent. The agent wrote the code, CI found a problem the local tests didn't catch, and now the agent fixes it without human intervention.
-
-The retry limit of 10 prevents runaway loops, and the decision to keep CI logs in memory only (never on disk) avoids polluting the workspace.
+The CI auto-fix loop creates a genuine feedback cycle between the test environment and the agent. The agent wrote the code. CI found a problem local tests didn't catch. The agent fixes it without human intervention. That loop — write, test, fail, learn, fix — is what turns a coding assistant into an autonomous workflow. The retry limit of 10 prevents runaway loops, and keeping CI logs in memory only avoids polluting the workspace.
 
 ## What Actually Matters
 
-After a month of building these systems, my takeaways are practical:
+Memory, shared context, graceful recovery. Three patterns. None of them require clever prompting or exotic model capabilities. All of them require caring about the boring infrastructure that sits between the LLM and the actual work.
 
-1. **Memory changes everything.** A stateless agent is a demo. A stateful agent is a tool. The implementation is trivial — it's just a file — but the impact on output quality is dramatic.
+A stateless agent is a demo. A stateful agent is a tool. The implementation is trivial — it's just a file — but the impact on output quality is dramatic. Repeated codebase exploration is the single biggest token waste in multi-phase agentic workflows, and a shared context file eliminates it overnight. Hard failures are fine as long as the system records what happened and has a path to retry differently. And the gap between "code committed locally" and "PR merged" is where you either build a toy or build something people actually use.
 
-2. **Explore once.** Repeated codebase exploration is the biggest token waste in multi-phase agentic workflows. A shared context file eliminates it.
+These aren't theoretical patterns. They're what fell out of running lgtm and snap on real projects and watching where they broke. The tools keep evolving. But the core insight — that memory, context sharing, and graceful recovery matter more than prompt engineering — has held up under every project I've thrown at it.
 
-3. **Let agents fail gracefully.** Hard failures are fine as long as the system records what happened and has a path to retry differently. The `RecoverableError` pattern in lgtm is simple and directly reusable.
-
-4. **Close the full loop.** The gap between "code committed locally" and "PR merged" is where most autonomous tools stop. Automating push, PR creation, and CI monitoring is what makes the difference between a coding assistant and an autonomous workflow.
-
-These aren't theoretical patterns. They're the result of running lgtm and snap on real projects and watching where they break. The tools are still evolving, but the core insight — that memory, context sharing, and graceful recovery are more important than prompt engineering — has held up.
-
-You can find both tools on GitHub: [lgtm](https://github.com/yarlson/lgtm) and [snap](https://github.com/yarlson/snap).
+Both tools are on GitHub: [lgtm](https://github.com/yarlson/lgtm) and [snap](https://github.com/yarlson/snap). Go build something that remembers.

@@ -7,33 +7,11 @@ tags:
   - go
 ---
 
-## TL;DR
+Go made visibility a naming convention. One capital letter decides whether the rest of the world gets to touch your code. That single design choice tells you everything about the language's relationship with names: they carry weight here. They do real work. And most Go codebases still get them wrong.
 
-- Go has specific naming conventions that enhance code readability and maintainability
-- Use PascalCase for exported identifiers, camelCase for unexported ones
-- Keep names short but descriptive, prioritizing clarity over brevity
-- Follow consistent patterns for different types (structs, methods, interfaces, etc.)
-- Handle acronyms in names according to Go's specific conventions
-- Strive for self-documenting code through thoughtful naming
+## Casing Is Access Control
 
-## Introduction
-
-As a Go developer, I've learned that one of the most underappreciated yet crucial aspects of writing clean, maintainable code is naming. It's an art form that balances brevity with clarity, consistency with creativity. Today, we're diving deep into the world of function and variable naming in Go. Why? Because great names can make your code sing, while poor ones can turn it into an unreadable mess.
-
-I remember the first time I contributed to a large Go project. I thought I knew the language well, but my pull request came back with more comments about naming than actual logic! That experience taught me the importance of Go's naming conventions, and I'm here to share those lessons with you.
-
-## The Go Way: Embracing Simplicity and Clarity
-
-Before we dive into specific conventions, let's talk about the philosophy behind Go's approach to naming. Go, as a language, values simplicity and readability. This ethos extends to its naming conventions, which aim to make code self-documenting and easy to understand at a glance.
-
-### The Power of PascalCase and camelCase
-
-In Go, we use two main casing styles:
-
-1. **PascalCase**: Used for exported (public) identifiers
-2. **camelCase**: Used for unexported (private) identifiers
-
-This distinction is more than just a style choice – it's baked into the language itself. Anything that starts with a capital letter is exported and visible outside the package, while lowercase-starting identifiers are package-private.
+Let's talk about the thing that makes Go genuinely unusual. PascalCase means exported. camelCase means unexported. This isn't a style guide suggestion you can ignore. It's the language.
 
 ```go
 type User struct {  // Exported (public) type
@@ -50,15 +28,13 @@ func (u *User) increaseAge() {  // Unexported method
 }
 ```
 
-This convention immediately tells other developers (and yourself) about the visibility and intended use of each identifier. It's a small detail that makes a big difference in code readability.
+A single letter controls visibility. No `public` keyword. No `private` annotation. Just the first letter. That is a superpower. You glance at any symbol in any file and you immediately know its scope. But here's the thing -- it only works if you respect the rest of the naming conventions too.
 
-## Naming Conventions: A Closer Look
+## The Conventions That Actually Matter
 
-Let's break down the naming conventions for different elements in Go code:
+### Structs Are Nouns
 
-### 1. Structs: The Nouns of Your Code
-
-Structs in Go are typically named using PascalCase nouns. They represent entities or concepts in your domain.
+Structs represent things. Name them like things. PascalCase nouns.
 
 ```go
 type Project struct {
@@ -70,9 +46,11 @@ type WorkerPool struct {
 }
 ```
 
-### 2. Methods: Actions for Your Types
+No `ProjectStruct`. No `WorkerPoolData`. The type system already tells you it's a struct. Don't repeat what the compiler already knows.
 
-Methods are functions associated with a type. In Go, we name them using PascalCase, starting with a verb that describes the action.
+### Methods Are Verbs
+
+Methods do things to your types. Start with a verb. Keep it tight.
 
 ```go
 func (p *Project) Create() error {
@@ -84,11 +62,11 @@ func (wp *WorkerPool) Process(job Job) {
 }
 ```
 
-Notice how the method names are concise yet descriptive. They tell you exactly what the method does without being overly verbose.
+Look at how little you need. The receiver tells you the subject. The method name tells you the action. Done. Why would you add more words?
 
-### 3. Functions: Standalone Actions
+### Functions Follow the Same Pattern
 
-Functions that aren't methods follow a similar pattern to methods, using PascalCase. They often start with an action word or describe their purpose clearly.
+Standalone functions work the same way -- PascalCase, action-oriented, clear about what they return.
 
 ```go
 func ParseConfig(filename string) (Config, error) {
@@ -105,11 +83,11 @@ func NewHandler() *Handler {
 }
 ```
 
-Note how these function names clearly indicate their purpose, making the code more self-documenting.
+`ParseConfig` takes a filename, gives you a Config. `NewHandler` gives you a Handler. The names are the documentation.
 
-### 4. Boolean Functions: Adjectives Without "Is"
+### Booleans Drop the "Is"
 
-When naming functions that return a boolean, Go convention suggests using adjectives without the "Is" prefix. This makes for more natural-sounding conditional statements.
+This one catches people coming from Java or C#. Go convention skips the `Is` prefix on boolean-returning methods. The result reads like actual English.
 
 ```go
 func (j *Job) Completed() bool {
@@ -122,11 +100,11 @@ if job.Completed() {
 }
 ```
 
-Doesn't that read more naturally than `if job.IsCompleted()`?
+Compare `if job.Completed()` with `if job.IsCompleted()`. The first reads like a question you'd ask a human. The second reads like enterprise middleware.
 
-### 5. Variables: Short and Sweet
+### Variables Stay Short
 
-Go encourages short, clear variable names. This doesn't mean using single-letter variables everywhere (except for very short-lived ones like loop indices), but rather finding a balance between brevity and clarity.
+Go wants short variable names. Not cryptic. Short. There's a difference.
 
 ```go
 proj := &Project{}
@@ -134,11 +112,11 @@ repo := NewRepository()
 ch := make(chan int)
 ```
 
-These names are short enough to not clutter your code, but clear enough that you know what they represent.
+A loop index gets `i`. A channel gets `ch`. A project gets `proj`. The scope tells you how short you can go -- the smaller the scope, the shorter the name. A variable that lives for three lines doesn't need to be `currentProjectInstance`.
 
-### 6. Constants: Clarity Trumps Brevity
+### Constants Get More Room
 
-For constants, we use PascalCase for exported constants and camelCase for unexported ones. Unlike variables, constant names can be a bit longer to provide more context.
+Constants are the one place where a few extra characters genuinely help. They're referenced far from where they're defined. Give them context.
 
 ```go
 const (
@@ -148,9 +126,11 @@ const (
 )
 ```
 
-### 7. Interfaces: Actions with "-er" or occasionally "-or"
+PascalCase for exported. camelCase for unexported. Same rule as everything else.
 
-Interfaces in Go often describe behavior, so we name them with PascalCase, typically ending with "-er" for actions, though occasionally "-or" is used.
+### Interfaces End in "-er"
+
+This is one of Go's best conventions. Interfaces describe behavior, so they get named like actors. A thing that reads is a `Reader`. A thing that writes is a `Writer`.
 
 ```go
 type Reader interface {
@@ -166,13 +146,11 @@ type Stringer interface {
 }
 ```
 
-This naming convention makes it immediately clear that we're dealing with an interface that defines a set of actions. While "-er" is more common, you might occasionally see "-or" in some standard library interfaces (like `io.Reader` or `io.Writer`).
+Single-method interfaces get the method name plus "-er". It's simple, predictable, and it works. When you see a `Reader` parameter, you know exactly what contract you need to satisfy.
 
-## The Art of Self-Documenting Code
+## Self-Documenting Code Is Not a Myth
 
-Now that we've covered the basics, let's talk about the real art of naming: making your code self-documenting. This means choosing names that explain what a function does or what a variable represents without needing additional comments.
-
-Consider this example:
+Good names eliminate comments. That's not aspirational -- it's mechanical. Pick names that say what happens, and the code explains itself.
 
 ```go
 func (s *Service) ProcessItems(items []Item) error {
@@ -192,63 +170,54 @@ func (s *Service) validateAndUpdateItem(item Item) error {
 }
 ```
 
-Without any comments, you can understand what this code does. The function names clearly describe their purpose, making the code easy to read and maintain.
+No comments anywhere. You still know exactly what this does. The function names carry all the meaning. That's the whole point.
 
-## Avoiding Common Pitfalls
+## The Mistakes That Keep Showing Up
 
-In my journey as a Go developer, I've seen (and, admittedly, made) some common naming mistakes. Let's look at a few:
+**Redundancy.** In a `project` package, `project.CreateProject()` is stuttering. Just `project.Create()`. The package name is already right there in the call site. Why say it twice?
 
-1. **Redundancy**: Avoid repeating the package name in your identifiers. For example, in a `project` package, `project.CreateProject()` is redundant. Just `project.Create()` is clearer.
+**Acronym casing.** Go has specific rules here and people cargo-cult them wrong constantly. Acronyms stay uniformly cased -- all caps or all lower. Never mixed.
 
-2. **Acronym Casing**: Go has specific conventions for handling acronyms in names. When an acronym is part of a name, it should be uniformly upper case or lower case, depending on whether the name starts with the acronym and whether it's exported.
-   - If the name begins with the acronym and is exported, use all caps for the acronym.
-   - If the name doesn't begin with the acronym or is unexported, use all lowercase for the acronym.
+```go
+// Correct usage
+var userID string
+var httpSrv *http.Server
 
-   Here are some examples:
+func ServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func newHTTPClient() *http.Client {}
 
-   ```go
-   // Correct usage
-   var userID string
-   var httpSrv *http.Server
+type XMLEncoder struct{}
+type xmlEncoder struct{}
 
-   func ServeHTTP(w http.ResponseWriter, r *http.Request) {}
-   func newHTTPClient() *http.Client {}
+// Incorrect usage
+var userId string
+var HttpSrv *http.Server
 
-   type XMLEncoder struct{}
-   type xmlEncoder struct{}
+func ServeHttp(w http.ResponseWriter, r *http.Request) {}
+func newHttpClient() *http.Client {}
 
-   // Incorrect usage
-   var userId string
-   var HttpSrv *http.Server
+type XmlEncoder struct{}
+type XMLencoder struct{}
+```
 
-   func ServeHttp(w http.ResponseWriter, r *http.Request) {}
-   func newHttpClient() *http.Client {}
+`userId` looks reasonable if you've been writing JavaScript all week. But in Go, it's `userID`. `ServeHttp` looks fine at first glance. It's `ServeHTTP`. The rule is consistent and the linter will catch it, so just learn it once.
 
-   type XmlEncoder struct{}
-   type XMLencoder struct{}
-   ```
+**Single-letter overreach.** `i` in a for loop is fine. `u` for a user that gets passed around for thirty lines is not.
 
-3. **Overuse of Single-Letter Variables**: While `i` for a loop index is fine, avoid using single letters for important variables.
+```go
+// Avoid
+u, err := GetUser(id)
 
-   ```go
-   // Avoid
-   u, err := GetUser(id)
+// Better
+user, err := GetUser(id)
+```
 
-   // Better
-   user, err := GetUser(id)
-   ```
+**Inconsistent verb families.** If you have `CreateUser`, `UpdateUser`, and `DeleteUser`, don't suddenly introduce `RemoveCustomer`. Pick your verbs. Stick with them across the entire codebase.
 
-4. **Inconsistent Naming Across Similar Concepts**: Maintain consistency in your naming. If you have `CreateUser`, `UpdateUser`, and `DeleteUser`, don't suddenly switch to `RemoveCustomer`.
+## Why This All Matters
 
-## Conclusion: The Impact of Good Naming
+Naming is the cheapest, highest-leverage thing you can do for code quality. Good names shrink code reviews, flatten the onboarding curve, and kill the need for half your comments. They make refactoring safer because the intent is right there in the identifier. They make bugs more visible because a function doing something its name doesn't describe sticks out.
 
-As we've explored, naming in Go is more than just following a set of rules. It's about creating code that's easy to read, understand, and maintain. Good naming can:
+Go's naming conventions aren't arbitrary. They're a compression algorithm for intent. Casing encodes visibility. Brevity encodes scope. Verb choice encodes behavior. Every convention is load-bearing.
 
-- Reduce the need for comments
-- Make code reviews smoother
-- Decrease onboarding time for new team members
-- Improve overall code quality and maintainability
-
-Remember, you're not just writing code for the compiler – you're writing it for other developers (including future you). Taking the time to choose good names is an investment that pays off in the long run.
-
-So, the next time you're about to name a function, variable, or type in Go, pause for a moment. Ask yourself: "Does this name clearly convey its purpose? Is it consistent with Go conventions and the rest of my codebase?" Your future self (and your teammates) will thank you.
+Next time you're about to name something, take the extra five seconds. Your teammates will read that name a thousand times. Make it count.

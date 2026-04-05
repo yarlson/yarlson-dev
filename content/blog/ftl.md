@@ -7,24 +7,68 @@ tags:
   - docker
 ---
 
-After years of deploying applications with various technology stacks in production using docker-compose, I started feeling there should be a better way. While docker-compose got the job done, deployment automation was always a custom script on top. And while Kubernetes offers powerful container orchestration, rolling updates, and an extensive ecosystem, setting up and maintaining a cluster for basic applications felt like overkill. I wanted something that sat in that sweet spot between running docker-compose commands over SSH and managing a full container cluster.
+Deployment tools eventually disappoint you. Either it's a shell script held together with `rsync` and prayers, or it's a full Kubernetes cluster for an app that serves maybe forty requests per second. I spent years living in that gap — running docker-compose in production, stitching together custom deploy scripts, and pretending it was fine. It wasn't fine.
 
-Most deployment tools seem to fall into two camps: either they're too simplistic (rsync scripts), or they're full-blown orchestration platforms that feel like overkill for smaller projects. Tools like Kamal (Ruby) and Sidekick (Go) have emerged to fill this gap, but they either lock you into single-service deployments or lack database provisioning. I needed something that could handle zero-downtime deployments without complexity, manage both frontend and backend services, deal with databases and dependencies without separate tooling, and stay lightweight and configuration-driven.
+So I built FTL. And the thing that makes it genuinely different isn't a feature — it's an absence. No registry requirement. No orchestrator. No sprawling config. One YAML file, one binary, one SSH connection. Zero-downtime deploys that actually work.
 
-I landed on Go for FTL because it solved my biggest headaches - I needed solid SSH handling for remote ops, wanted to give users a single binary that "just works" on any platform, and the concurrency primitives made sense for juggling multiple deployment tasks. But the real breakthrough was realizing I could ditch the sprawl of config files. Instead of juggling docker-compose.yml, nginx.conf, deploy scripts, and SSL cert automation, everything lives in one YAML file that defines your entire stack. Want zero-downtime deploys? They're automatic. Need SSL certs? FTL handles it. Running database migrations? Hook them into the deploy step. It's basically what I wished docker-compose could do out of the box – smart enough to handle the tedious stuff but not so clever that you can't figure out what's going on under the hood.
+But let me back up.
 
-A major pain point with tools like Kamal and Sidekick is their reliance on external Docker registries - you're forced to push and pull images through a registry even for a simple deployment. I wanted to cut out this middleman. FTL can work with registries if you want, but it doesn't need one - it performs layer-by-layer analysis and transfers only the changed bits directly over SSH. This dropped deployment times by ~60% in testing, plus you don't need to deal with registry authentication or storage costs. The same philosophy applied to other components: built-in Nginx config generation handles routing and SSL, and everything works over plain SSH. All you need is a bare Linux server with SSH access - FTL handles the rest, even installing Docker if it's not there.
+## The deployment tool landscape is a wasteland
 
-The trickiest technical challenge was handling zero-downtime deployments without complex orchestration. The solution was a rolling update process that starts the new container, waits for health checks to pass, updates the Nginx configuration to route traffic, and gracefully shuts down the old container. This required careful timing and proper signal handling, especially for the Go backend service.
+Look, the market has exactly two offerings. Camp one: shell scripts and `rsync`. Works until it doesn't. Camp two: Kubernetes, Nomad, ECS — platforms that treat a three-service web app like it's the Mars rover. Tools like Kamal and Sidekick have tried to carve out middle ground, and they deserve credit for that. But Kamal locks you into single-service thinking. Sidekick skips database provisioning entirely. Neither felt complete.
 
-Managing database state during deployments was another interesting challenge to solve. FTL offers two types of deployment hooks - local and remote. With local hooks, it automatically creates SSH tunnels to your databases, so you can run migrations from your machine while keeping the database port closed on the production server. Or if you prefer, you can use remote hooks to run migrations directly on the server. This dual approach gives developers the flexibility to handle database changes however they prefer while keeping everything secure.
+What I actually needed was tight. Zero-downtime deploys without ceremony. Frontend and backend services in one definition. Database provisioning without bolting on separate tooling. Configuration-driven, not script-driven.
 
-Being honest, FTL isn't perfect. It doesn't support distributed deployments across multiple servers yet. If you opt to use a Docker registry (which is entirely optional), you're limited to username/password authentication. There's no built-in rollback mechanism (though containers are preserved for manual rollback), and database backups must be handled externally. But for its intended use case – deploying modern web applications without unnecessary complexity – it works remarkably well.
+Why is this so hard to find?
 
-How fast is it? First deployment to a fresh server takes a few minutes - FTL needs to set up its environment, install Docker if needed, and transfer all your application layers. Once that's done, subsequent deploys are pretty snappy, usually clocking in around a minute. The speed comes from the way FTL handles container layers: it only pushes what's changed since your last deploy. On the server side, you've just got your containers and a Nginx reverse proxy running on the host - nothing fancy, just the essentials. And yeah, those deployments are genuinely zero-downtime - your users won't notice a thing when you push updates.
+## One YAML file. That's it.
 
-Looking ahead, I'm actively working on automated database backups, multi-server deployment support, and better logging and monitoring integration. But the core goal remains the same: making deployments simple again.
+I wrote FTL in Go for reasons that sound boring but matter: rock-solid SSH libraries, single-binary distribution, and concurrency primitives that don't fight you when you're juggling five deployment tasks in parallel.
 
-Full documentation is available at https://ftl-deploy.org. The project is open source at https://github.com/yarlson/ftl - if you're tired of complex deployments too, I'd appreciate a star. It helps other developers find a simpler way to ship their code.
+But the real breakthrough was killing config sprawl. A typical docker-compose deployment involves `docker-compose.yml`, `nginx.conf`, deploy scripts, SSL cert automation scripts, maybe a Makefile to glue it all together. Brittle. Hollow. Every new developer on the team asks "wait, which script do I run?"
 
-Written by a developer who just wanted deployments to be simple again.
+FTL collapses all of it into one YAML file. Want zero-downtime deploys? Automatic. Need SSL certs? Handled. Running database migrations? Hook them into the deploy step. It's what docker-compose should have been — smart enough to handle the tedious parts, lean enough that you can read the whole thing and understand what's happening.
+
+## Let's talk about Docker registries
+
+Here's the thing about tools like Kamal and Sidekick: they force you through a Docker registry. Build image, push to registry, pull from registry, run. For every single deploy. Even when your "production infrastructure" is one server in Hetzner.
+
+That middleman is dead weight. FTL can work with registries if you want one. But it doesn't need one. Instead, it performs layer-by-layer analysis and transfers only the changed bits directly over SSH. No registry authentication. No storage costs. No extra network hop. In testing, this dropped deployment times by roughly 60%.
+
+The same philosophy runs through the whole tool. Built-in Nginx config generation handles routing and SSL. Everything travels over plain SSH. All you need is a bare Linux server with SSH access — FTL handles the rest, including installing Docker if it's missing. That simplicity is a superpower.
+
+## Zero-downtime without the orchestrator tax
+
+The trickiest engineering problem was making zero-downtime deploys work without complex orchestration machinery. No sidecars. No service mesh. No control plane.
+
+The solution is a rolling update sequence: start the new container, wait for health checks to pass, update the Nginx configuration to route traffic, then gracefully shut down the old container. Four steps. Careful timing and proper signal handling make it reliable — especially for long-lived connections on the Go backend. Nothing clever. Just earned reliability through getting the sequencing right.
+
+## Database migrations that don't make you sweat
+
+Managing database state during deploys is where most tools either punt or overcomplicate. FTL offers two flavors of deployment hooks — local and remote.
+
+Local hooks automatically create SSH tunnels to your databases. You run migrations from your machine while the database port stays closed on the production server. Security without gymnastics. Remote hooks let you run migrations directly on the server if that's your preference.
+
+Why force one approach? Different teams have different security postures, different compliance requirements, different opinions. FTL gives you both and stays out of the way.
+
+## What FTL doesn't do
+
+I'm not going to pretend it's perfect. No distributed multi-server deployments yet. If you opt into a Docker registry, you're limited to username/password auth. There's no built-in rollback mechanism — though containers are preserved so you can roll back manually. Database backups are your responsibility.
+
+But here's the thing: those limitations are honest. They're the boundaries of a tool that does one thing well rather than a tool that claims to do everything and does most of it poorly.
+
+## How fast, actually?
+
+First deployment to a fresh server takes a few minutes. FTL sets up its environment, installs Docker if needed, transfers all your application layers. That's the slow part.
+
+After that? Subsequent deploys land in about a minute. The speed comes from layer diffing — FTL only pushes what's changed since your last deploy. On the server side, you've got your containers and an Nginx reverse proxy on the host. Nothing else. No agents. No daemons. No monitoring sidecar eating RAM. And the deploys are genuinely zero-downtime. Your users won't notice.
+
+## The verdict
+
+I started FTL because the space between "SSH and hope" and "operate a cluster" was empty. Every tool either demanded too little thinking or too much infrastructure. FTL sits in that gap — one binary, one config file, zero-downtime deploys over SSH, no registry required, database migrations built in.
+
+Simplicity isn't the absence of capability. It's the discipline to stop before the tool becomes the thing you're debugging instead of the thing you're shipping.
+
+Full documentation lives at [ftl-deploy.org](https://ftl-deploy.org). The project is open source at [github.com/yarlson/ftl](https://github.com/yarlson/ftl) — if simpler deployments sound good to you, a star helps other developers find it.
+
+Now go ship something.

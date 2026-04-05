@@ -11,9 +11,11 @@ _Response to [Harper Reed's blog post](https://harper.blog/2025/02/16/my-llm-cod
 
 ---
 
-## Introduction
+Harper Reed wrote a genuinely useful post about using LLMs to generate code. One prompt, one shot, ship it. And for a weekend hack or a single-file utility? That workflow is a superpower.
 
-Harper's method works well for small projects. But as your project grows, you need more structure to handle the complexity. In this post, I'll share a refined process that builds on his ideas. My approach includes clear prompts for both product and technical planning, breaking the project into modules, and organizing work into sprints with TDD iterations. The goal is to keep everything clear and precise throughout development.
+But here's the thing. Projects grow. What started as a clean little prototype sprouts authentication, then a second data store, then an API contract someone else depends on. Suddenly you're stuffing an entire system's worth of context into a single prompt and wondering why the LLM is hallucinating import paths.
+
+The fix isn't magic. It's the same thing that fixes every scaling problem in software: decomposition, clear specs, and small verifiable steps. What follows is a process that builds on Harper's foundation and stretches it to projects that actually have moving parts.
 
 ---
 
@@ -21,59 +23,59 @@ Harper's method works well for small projects. But as your project grows, you ne
 
 ## 1. Gather Product Information
 
-Start by asking focused questions to understand every aspect of your product. This helps you capture details about target audience, features, market positioning, and user benefits—one question at a time.
+Most people skip straight to code. That's backwards. You need to interrogate the idea first—audience, features, positioning, the stuff that determines whether you're building the right thing at all.
+
+The trick is forcing the LLM into one-question-at-a-time mode. Let it build context incrementally instead of vomiting a wall of assumptions.
 
 ```markdown
 Ask me one question at a time to explore and uncover every aspect of the product idea. Focus solely on product characteristics such as target audience, features, value propositions, market positioning, and user benefits. Each question should build on my previous answers so that we gradually develop a complete picture of the product concept. Let's take this one step at a time—only one question per turn—until we have a comprehensive understanding of the product.
 ```
 
-_Explanation:_
-This prompt sets up a focused discussion to make sure you don't miss any important details.
+One question per turn sounds slow. It's not. It's the fastest way to avoid building something nobody wants.
 
 ---
 
 ## 2. Detailed Product Specification
 
-After gathering the product details, turn the conversation into a structured document. This spec will outline the product features, target markets, user scenarios, and key business requirements.
+Raw conversation is useless as a reference document. You need to crystallize it into something a developer—or another LLM session—can actually work from.
 
 ```markdown
 Based on our conversation about the product, please transform my answers into a detailed product specification. Organize the information into clear sections that cover product features, target market, user scenarios, and any relevant business requirements. Ensure that the output reads as a coherent and complete specification that can be handed off to stakeholders or a development team, focusing exclusively on the product aspects.
 ```
 
-_Explanation:_
-This specification becomes the blueprint for your project and creates a solid foundation for the development work ahead.
+This spec becomes the single source of truth. Every subsequent prompt points back to it. No spec, no alignment. No alignment, no working software.
 
 ---
 
 ## 3. Gather Technical Implementation Information
 
-Next, focus on the technical details by asking specific questions about architecture, tech stacks, integrations, scalability, security, and more. This helps you collect all the necessary technical context.
+Now flip the lens. Same one-at-a-time interrogation, but focused entirely on how this thing gets built. Architecture, stack choices, integration points, security constraints, the sharp edges you'll cut yourself on later if you ignore them now.
 
 ```markdown
-Ask me one question at a time to gather detailed information regarding the technical implementation of the product. Focus on aspects such as architecture, technology stacks, integration points, performance considerations, scalability, security, and any constraints or requirements from a technical perspective. Each question should build on my previous answers to progressively uncover a full picture of how the product will be built. Let’s work iteratively—one question at a time—until we have all the technical details needed.
+Ask me one question at a time to gather detailed information regarding the technical implementation of the product. Focus on aspects such as architecture, technology stacks, integration points, performance considerations, scalability, security, and any constraints or requirements from a technical perspective. Each question should build on my previous answers to progressively uncover a full picture of how the product will be built. Let's work iteratively—one question at a time—until we have all the technical details needed.
 ```
 
-_Explanation:_
-This prompt keeps the technical questions separate, ensuring you cover all relevant aspects without overwhelming the process.
+Why separate this from the product pass? Because mixing "what should it do" with "how should it work" is how you end up with a spec that's neither useful to a PM nor a developer. Keep the concerns apart.
 
 ---
 
 ## 4. Detailed Technical Specification
 
-Put all the technical details into a comprehensive document. This should clearly describe the system architecture, technology choices, data flows, integration methods, and any technical limitations.
+Same transformation as before, but for the technical side. Architecture diagrams, data flows, integration methods, constraints—everything a developer needs to start writing code without guessing.
 
 ```markdown
 Based on our technical discussion, transform my answers into a detailed technical specification document. The output should include clear sections covering system architecture, technology choices, data flows, integration methods, and any necessary technical constraints or requirements. Ensure that the information is organized logically and can serve as a comprehensive guide for developers responsible for implementing the product. The focus should be solely on the technical details.
 ```
 
-_Explanation:_
-Having a detailed technical spec serves as a clear roadmap for the development team, reducing confusion and getting everyone on the same page.
+Look, a technical spec that lives outside the LLM's ephemeral context window is genuinely powerful. You can feed pieces of it into future sessions. You can hand it to a human. You can diff it when requirements shift. It's a artifact that compounds in value.
 
 ---
 
 ## 5. Modularization of the Product Specification
 
-Split the overall product spec into distinct modules. This breakdown lets you focus on each component independently and manage dependencies efficiently.
+Here's where this diverges hard from the single-prompt approach. You take that monolithic spec and carve it into self-contained modules. Each one has a clear boundary, a defined scope, and explicit dependencies.
+
+Why does this matter? Because LLMs work better with focused context. Feed them one module's worth of requirements instead of an entire system's, and the output quality jumps dramatically.
 
 ```markdown
 We have a comprehensive product specification that covers all aspects of the idea. Please divide this complete specification into discrete modules or components. Each module should represent a self-contained section of the product with minimal dependencies on other modules. For every module, include the following:
@@ -86,14 +88,13 @@ We have a comprehensive product specification that covers all aspects of the ide
 The goal is to ensure that when working on any particular module, only the relevant details are in the context—making development more efficient and focused. Once modularization is complete, we can later use these modules to plan and estimate development tasks independently.
 ```
 
-_Explanation:_
-Breaking the project into modules helps isolate each part of the system, making it easier to assign tasks and manage complexity.
+Isolation is a superpower. For humans, for microservices, and especially for LLM context windows.
 
 ---
 
 ## 6. Creating Sprints with Modularization and Vertical Slicing
 
-Break the project down into manageable sprints based on your modules. Each sprint should deliver a complete vertical slice that includes both product and technical elements.
+Modules give you the what. Sprints give you the when and how much. Each sprint should deliver a vertical slice—something that works end to end, from interface down to storage. Not a "we built the database layer" sprint. A "users can actually do the thing" sprint.
 
 ```markdown
 We have a comprehensive product specification that has been divided into discrete modules or components. Each module is a self-contained part of the product with minimal cross-dependencies. Now, please break down the overall project into manageable and estimatable sprints by leveraging these modules.
@@ -108,27 +109,25 @@ For each sprint, ensure that:
 - Milestones and Deliverables: Define measurable deliverables or checkpoints that signify the successful completion of the sprint.
 ```
 
-_Explanation:_
-Breaking the project into sprints using a vertical slice method ensures that each sprint delivers working functionality—key for maintaining momentum on larger projects.
+Vertical slices keep you honest. You can't hide behind "infrastructure sprint" when every delivery has to touch the full stack.
 
 ---
 
 ## 7. Summarize Previous Conversation History
 
-During long discussions, create regular summaries to capture key decisions and keep the conversation clear.
+Long LLM conversations drift. Context windows fill up. The model starts forgetting decisions you made three thousand tokens ago. Regular summaries are your checkpoint system.
 
 ```markdown
 Please generate a concise summary of our conversation so far, focusing on the key points, decisions, and information exchanged. Once the summary is complete, continue with the conversation as if nothing interrupted our flow—using the summary to inform subsequent questions and responses. The goal is to ensure continuity while keeping the context clear and current.
 ```
 
-_Explanation:_
-Regular summaries act as checkpoints, helping you and your team stay aligned on the project's progress and direction.
+Think of it as garbage collection for your conversation. Compress what matters, discard what doesn't, keep moving.
 
 ---
 
 ## 8. TDD Iteration for Sprint Implementation
 
-Use a Test-Driven Development (TDD) approach to implement each sprint. This method ensures that features are built in small, testable increments.
+This is where code actually gets written. And the method is TDD—not because it's trendy, but because LLMs are genuinely better at writing code when you give them a tight red-green-refactor loop. One test. Just enough code. Verify. Clean up. Next.
 
 ```markdown
 You're a senior software engineer guiding the development of sprint <sprint name here>, which focuses on implementing a specific module or a vertical slice of the overall product. Our product has been modularized according to earlier specifications, and this sprint is dedicated to delivering a self-contained, end-to-end functionality.
@@ -146,13 +145,12 @@ The tests should evolve over time to become expressive, self-documenting, and se
 Important: In each response, provide only one iteration — include the new test, the minimal implementation, the test results, and any refactoring you perform. Then, wait for the next instruction before proceeding.
 ```
 
-_Explanation:_
-Using TDD gives you a systematic way to build your project reliably. It ensures each feature is fully tested before moving on, reducing the risk of bugs as the project grows.
+The one-iteration-per-response constraint is doing heavy lifting here. It prevents the LLM from racing ahead, generating five hundred lines of untested code, and leaving you to sort out the wreckage.
 
 ---
 
-## Final Thoughts
+So what's actually happening across these eight steps? You're doing what good engineering has always demanded: understanding the problem before solving it, breaking big things into small things, and verifying each piece before moving to the next. The LLM doesn't change the fundamentals. It just makes the cost of each step low enough that there's no excuse to skip them.
 
-In short, Harper Reed's workflow is great for small projects, but bigger projects need more planning. This process gives you a clear path for gathering ideas, nailing down technical details, breaking work into manageable chunks, and using TDD to keep everything on track. It's simple enough to follow whether you're working alone or with a team. Give it a try on your next big project and see how it helps.
+Harper's workflow is the right starting point. But structure is what carries you from prototype to product. Decompose, specify, isolate, verify. That's the whole game.
 
-Happy coding!
+Now go build something worth maintaining.

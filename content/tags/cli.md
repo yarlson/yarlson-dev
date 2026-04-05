@@ -3,4 +3,4 @@ name: CLI
 description: Command-line interfaces, tooling practices, and terminal-based workflows
 ---
 
-Posts about building reliable command-line tools, covering design patterns, UX for terminals, and production-ready operational practices.
+Building CLI tools that earn trust. Design patterns, terminal UX, and the details that separate a script from something people actually rely on.

@@ -7,21 +7,19 @@ tags:
   - go
 ---
 
-Go 1.22 introduced a neat feature that I've been experimenting with lately: built-in support for iterators via the new `iter` package. This addition simplifies handling data streams, especially in command-line applications. I thought I'd share how I used these iterators in a CLI tool I was working on.
+Go CLI tools hit the same wall. You have a long-running task, you want to stream status updates to the terminal, and now you're staring at a channel, a goroutine, a `select` block, and a `done` signal that you will absolutely forget to close at least once. Channels are genuinely great concurrency primitives. But reaching for them when you don't actually need concurrency? That's cargo-culted complexity.
 
-### The Problem
+Go 1.22 shipped something better for this exact problem: built-in iterator support via the `iter` package. And it is a superpower.
 
-I needed to create a CLI that performs a long-running task and outputs status updates as it progresses. Traditionally, you might use channels or process everything upfront, but those approaches can be cumbersome or inefficient for this use case.
+### What I was building
 
-### Enter Go 1.22 Iterators
+A CLI that performs a long-running task and prints status updates as it goes. Start, progress, error, done. Simple requirements. The kind of thing that shouldn't require you to think about goroutine lifecycles.
 
-The new iterator support allows functions to yield values one at a time, which is perfect for streaming data or handling ongoing tasks. The best part is that you can use these iterators directly in `for...range` loops without additional complexity.
+Let's talk about how iterators make this trivially clean.
 
-Here's how I set it up.
+### Defining event types
 
-### Defining Event Types
-
-First, I defined an `EventType` to represent different stages of the task:
+First, a straightforward `EventType` and a struct to carry data:
 
 ```go
 type EventType string
@@ -34,8 +32,6 @@ const (
 )
 ```
 
-And a `CommandEvent` struct to hold the event data:
-
 ```go
 type CommandEvent struct {
     Type    EventType
@@ -43,19 +39,23 @@ type CommandEvent struct {
 }
 ```
 
-### Creating a Custom Iterator Type
+Nothing fancy. Just typed strings and a struct. Moving on.
 
-To make the code cleaner, I introduced a custom iterator type:
+### A custom iterator type
+
+Here's where it gets interesting:
 
 ```go
 type CommandEventIterator func(yield func(*CommandEvent, error) bool)
 ```
 
-This type represents a function that yields `*CommandEvent` values, possibly returning an error.
+One line. That's your entire streaming abstraction. A function that yields `*CommandEvent` values and errors, one at a time, directly into a `for...range` loop. No channels. No goroutines. No close signals.
 
-### Implementing the Iterator Function
+Why does this matter? Because the calling code doesn't need to know anything about how events are produced. It just ranges over them. The iterator owns the control flow, yields when it has something, and stops when it's done.
 
-Next, I wrote the `CommandEventStream` function, which simulates a long-running task:
+### The iterator function
+
+Here's the implementation that simulates a task with progress updates and an error at 60%:
 
 ```go
 func CommandEventStream() CommandEventIterator {
@@ -100,11 +100,11 @@ func CommandEventStream() CommandEventIterator {
 }
 ```
 
-This function yields start, update, and end events, and simulates an error at 60% progress.
+Look, the `if !yield(...) { return }` pattern takes a minute to internalize. But once you do, it reads like a script: emit start, loop through updates, handle the error case, emit end. The yield returns false when the consumer breaks out of the loop, and you just... return. That's the entire cancellation mechanism.
 
-### Consuming the Iterator in `main`
+### Consuming it
 
-The beauty of Go 1.22's iterators is that you can use them directly in a `for...range` loop without any additional setup. Here's how I used the iterator in the `main` function:
+But here's the thing. The consumer side is where this pattern genuinely shines:
 
 ```go
 func main() {
@@ -130,9 +130,9 @@ func main() {
 }
 ```
 
-### Running the Program
+A `for...range` loop. That's it. No channel reads, no goroutine cleanup, no deferred closes, no `sync.WaitGroup`. Just iterate over events and handle them. The iterator and the loop run in the same goroutine, so there's zero concurrency overhead.
 
-When I run the program, I get:
+### Output
 
 ```
 Starting the CLI application with error handling...
@@ -146,28 +146,24 @@ End: Task completed
 CLI application has finished.
 ```
 
-Each message appears every 2 seconds, simulating the task's progression.
+Each line appears every two seconds. Streaming output with no buffering, no memory accumulation, no concurrency bugs waiting to surface in production.
 
-### Benefits of This Approach
+### Why this is better
 
-Using iterators like this has several advantages:
+Four things:
 
-- **Efficiency**: Processes one event at a time without loading everything into memory.
-- **Simplicity**: The code is straightforward and easy to follow.
-- **Error Handling**: Errors are managed within the iterator, keeping the `main` function clean.
-- **No Extra Concurrency**: We don't need to set up channels or goroutines; the iterator works seamlessly with `for...range`.
+- **Memory**: One event in memory at a time. Not a slice of all events. Not a buffered channel.
+- **Readability**: The producer reads top-to-bottom like a script. The consumer is a plain loop.
+- **Error handling**: Errors flow through the same yield mechanism. No separate error channel, no panics to recover from.
+- **No concurrency tax**: Same goroutine, same stack. You don't pay for what you don't use.
 
-### How It Works Under the Hood
+How many times have you seen a channel-based approach where someone forgot to drain the channel, or didn't close it, or introduced a deadlock because the producer and consumer had different assumptions about buffering? Iterators eliminate that entire category of bug.
 
-The `for...range` loop over the iterator function works because Go 1.22's iterator model allows the runtime to manage the control flow between the iterator and the loop. When the loop runs, it repeatedly calls the iterator function, and each call to `yield` passes a value back to the loop variables.
+### Under the hood
 
-This means that the iterator function and the loop execute in the same goroutine, and there's no need for additional concurrency mechanisms.
+Go 1.22's iterator model lets the runtime manage control flow between the iterator function and the `for...range` loop. Each call to `yield` passes a value back to the loop variables and suspends the iterator until the loop body completes. Same goroutine, cooperative scheduling, no magic.
 
-### Conclusion
-
-I found the new iterator support in Go 1.22 to be a valuable addition. It made handling a long-running task in a CLI application much simpler. Defining a custom iterator type improved the readability of my code, and the overall pattern feels natural.
-
-If you're working with Go and need to process data streams or handle tasks that produce incremental output, I'd recommend giving the new iterators a try.
+This is the same pattern that Python generators and C# enumerators have used for years. But it's Go, so it compiles to a single binary and runs without a runtime interpreter. That combination of ergonomics and performance is genuinely hard to find.
 
 ### Full Code Example
 
@@ -266,10 +262,6 @@ func main() {
 }
 ```
 
-### Final Thoughts
+Go 1.22's iterators aren't flashy. They don't introduce new syntax or require framework buy-in. They just give you a clean, composable, zero-overhead way to stream values through a `for...range` loop. For CLI tools that need to report progress, handle errors inline, and stay readable six months later, this pattern replaces channels, callbacks, and hand-rolled state machines with something that looks like... a loop.
 
-Go's iterator pattern introduced in version 1.22 is a game-changer for handling streams of data in a clean and efficient manner. By using a custom iterator type, we can write code that's both readable and maintainable.
-
-One of the standout benefits is that we don't need to manage channels or goroutines explicitly. The iterator integrates seamlessly with `for...range`, simplifying the code and reducing potential errors.
-
-If you haven't tried out the new `iter` package yet, it's worth exploring in your next Go project.
+Simplicity is a superpower. Use it.

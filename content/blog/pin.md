@@ -7,20 +7,22 @@ tags:
   - go
 ---
 
-I kept reaching for spinners in CLI tools and kept regretting it. Most of the libraries I tried were either heavier than I wanted for a tiny bit of terminal animation, or they made choices that didn't fit how I like my CLIs to behave.
+Most Go CLI spinner libraries have the same problem: they want to be frameworks. You pull in one dependency for a tiny rotating character in your terminal, and suddenly you're carrying transitive dependencies, ANSI abstractions you didn't ask for, and an API surface that assumes you're building a dashboard.
 
-So I built `pin`.
+All I wanted was a dot that spins.
 
-## What is pin?
+## So I built pin
 
-`pin` is a small terminal spinner for Go CLI apps. You can change spinner and text colors, add a prefix, tweak separators, and update the message while it's running. The big constraint is intentional: it uses only the Go standard library. That keeps it easy to audit, easy to vendor, and less likely to surprise you later.
+`pin` is a terminal spinner for Go. It does colors, prefixes, separators, and live message updates. That's it. But here's the thing that actually matters: it uses only the Go standard library. Zero external dependencies.
 
-## Key features
+Why does that matter? Because dependencies are promises. Every `go get` you run is a bet that some stranger's weekend project will keep working the way you expect. For something as trivial as a spinner, that bet is genuinely not worth taking. `pin` is easy to audit, easy to vendor, and it will never surprise you with a breaking change three levels deep in your dependency tree.
 
-- Configure spinner color, text color, prefix, separator, and other small formatting details.
-- Update the spinner message while work is in progress.
-- No third-party dependencies. Standard library only.
-- Detects when output is piped or redirected and disables animation so control characters don't end up in logs (for example: `./myapp | tee output.txt`).
+## What you get
+
+- Spinner color, text color, prefix, separator — the small formatting knobs you actually need.
+- Live message updates while work is in progress. Because "Loading..." isn't helpful for thirty seconds straight.
+- Pipe detection. When stdout isn't a terminal, `pin` disables animation so you don't get escape codes polluting your log files (try `./myapp | tee output.txt` — it just works).
+- Standard library only. I keep saying it because it's genuinely the whole point.
 
 ## Installation
 
@@ -58,8 +60,12 @@ func main() {
 }
 ```
 
-## Final thoughts
+Look, it's a spinner. The API should fit in your head in thirty seconds, and this one does.
 
-If you just want a spinner that looks decent, stays out of your way, and doesn't drag extra packages into a small CLI, `pin` is meant for that.
+## Why not just use [popular library]?
 
-Source is on GitHub: [github.com/yarlson/pin](https://github.com/yarlson/pin). If you run into something awkward, issues and PRs are welcome.
+Fair question. If you're already deep in a CLI framework that bundles its own spinner, use that. Seriously. But if you're writing a small tool — a deployment script, a code generator, a quick utility — and you want a clean loading indicator without adopting someone else's opinions about terminal rendering, `pin` exists for exactly that moment.
+
+Simplicity is a superpower. A spinner with no dependencies is a spinner that never breaks because somebody else shipped a bad release on a Friday afternoon.
+
+The source is on GitHub: [github.com/yarlson/pin](https://github.com/yarlson/pin). If something feels off, issues and PRs are welcome. It's small enough that you could read the whole thing over coffee.

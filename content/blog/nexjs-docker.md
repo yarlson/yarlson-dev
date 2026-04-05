@@ -8,22 +8,24 @@ tags:
   - nextjs
 ---
 
-There's a misconception that deploying NextJS apps with the new App Router beyond Vercel's infrastructure is difficult. This isn't true. This post will explain how to deploy a NextJS app using Docker and Docker Compose, with Nginx serving static assets and acting as a reverse proxy.
+A few times a year someone on Twitter declares that NextJS is "locked in" to Vercel. That deploying the App Router anywhere else is some Herculean ordeal requiring blood sacrifice and a DevRel contact. Look, I get where the anxiety comes from. Vercel makes deployment a one-click affair, and the NextJS docs don't exactly shout about alternatives. But here's the thing: deploying NextJS on your own infrastructure is genuinely straightforward. A Dockerfile, an Nginx config, a compose file. That's it.
 
-## The Building Blocks: What's Used
+Let's talk about what you actually need.
 
-The tools used in this deployment process are:
+## The Building Blocks
 
-1. NextJS: The React framework with the App Router.
-2. Docker: The containerization platform.
-3. Docker Compose: The tool for managing multi-container setups.
-4. Nginx: The web server for handling static assets and reverse proxy requests.
+Four pieces. Nothing exotic.
 
-## Step 1: Preparing Your NextJS App
+1. **NextJS** with the App Router.
+2. **Docker** for containerization.
+3. **Docker Compose** for orchestrating multiple containers.
+4. **Nginx** for serving static assets and proxying everything else to Node.
 
-The first step is to prepare the NextJS app for deployment. The key is to use the `standalone` output option in the `next.config.mjs` file. This creates a standalone build that includes all necessary dependencies.
+You probably have opinions about half of these already. Good. Keep them. Nothing here requires you to adopt a new religion.
 
-Here's what the `next.config.mjs` should look like:
+## Preparing the NextJS App
+
+The single most important thing is the `standalone` output option in `next.config.mjs`. Without it, you're dragging your entire `node_modules` into production like a ball and chain. With it, NextJS bundles only what the app actually needs to run.
 
 ```javascript
 /** @type {import('next').NextConfig} */
@@ -34,11 +36,11 @@ const nextConfig = {
 export default nextConfig;
 ```
 
-This configuration change tells NextJS to bundle everything the app needs to run independently.
+One line. That's the difference between a bloated image and a lean one. `standalone` is a superpower.
 
-## Step 2: Crafting the Dockerfile
+## The Dockerfile
 
-The next step is to create the Dockerfile. This uses a multi-stage build process to keep the final image efficient.
+Multi-stage builds are the move here. Four stages, each with a clear job, and the final images contain only what they need to run. No build tools. No dev dependencies. No leftover artifacts.
 
 ```dockerfile
 # Stage 1: Dependencies
@@ -90,16 +92,15 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-This multi-stage build consists of:
+Notice the `NEXT_TELEMETRY_DISABLED` flag? You're building inside a container. Phoning home to Vercel's analytics during a CI build is pointless. Kill it.
 
-1. Dependencies Stage: Installs production dependencies.
-2. Builder Stage: Builds the NextJS app, creating the standalone build.
-3. Runner Stage: Sets up the environment to run the NextJS app.
-4. Nginx Stage: Prepares Nginx to serve static files and act as a reverse proxy.
+The **deps** stage installs production dependencies. The **builder** stage compiles the app. The **runner** stage is the actual Node.js process — stripped down, production-only. And the **nginx** stage grabs the static assets and serves them directly, no Node.js round-trip required.
 
-## Step 3: Configuring Nginx
+Why not just let Node serve everything? Because Nginx is genuinely better at serving static files. It's been doing this for decades. Let each tool do what it's good at.
 
-Nginx is configured to direct requests appropriately. Here's the `nginx.conf` file:
+## Configuring Nginx
+
+This is where most people overthink things. The Nginx config has one real job: serve static assets directly, proxy everything else to the NextJS upstream.
 
 ```nginx
 user nginx;
@@ -182,15 +183,13 @@ http {
 }
 ```
 
-This configuration:
+The `/_next/static` location block is the important one. Those are your hashed, immutable build artifacts — CSS, JS chunks, images processed by Next. Serve them directly from disk with a year-long cache header. `immutable` tells the browser to never even bother revalidating. The `keepalive 64` on the upstream keeps persistent connections to the Node process, so you're not paying TCP handshake costs on every proxied request.
 
-- Sets up an upstream server for the NextJS app.
-- Configures handling for different types of requests.
-- Sets up caching and performance optimizations.
+Everything else at `/` falls through to the NextJS server for SSR, API routes, whatever dynamic work your app does.
 
-## Step 4: Orchestrating with Docker Compose
+## Orchestrating with Docker Compose
 
-Docker Compose is used to coordinate the NextJS app and Nginx. Here's the `docker-compose.yml` file:
+Two services. One network. Nothing clever.
 
 ```yaml
 services:
@@ -217,27 +216,20 @@ networks:
     name: nextjs-network
 ```
 
-This compose file:
+The `target` field in each service's build config is doing the heavy lifting. Both services build from the same Dockerfile but stop at different stages. The `depends_on` ensures Nginx doesn't start trying to proxy to a Node process that isn't up yet. And `restart: always` means if something crashes at 3 AM, Docker picks it back up without paging you.
 
-- Defines two services: the NextJS app and Nginx.
-- Sets up a network for them to communicate.
-- Exposes port 80 for incoming web traffic.
+## Deploying
 
-## Deployment Process
+Get Docker and Docker Compose on your server. Copy your project files over — the app source, the `Dockerfile`, `nginx.conf`, and `docker-compose.yml`. Then:
 
-To deploy the app:
+```
+docker-compose up -d --build
+```
 
-1. Ensure Docker and Docker Compose are installed on the server.
-2. Copy the NextJS project files, `Dockerfile`, `nginx.conf`, and `docker-compose.yml` to the server.
-3. Navigate to the project directory in the terminal.
-4. Run the following command:
+That builds both images and starts them in the background. Done. Your NextJS app is running behind Nginx on port 80.
 
-   ```
-   docker-compose up -d --build
-   ```
+Want to update? Pull your new code, run the same command. Docker rebuilds only the layers that changed.
 
-This command builds the Docker images and starts the containers in detached mode.
+The whole setup — multi-stage builds, Nginx for static assets, Docker Compose for orchestration — gives you a production deployment you actually control. You can put this on a $5 VPS, a bare-metal server, or behind whatever load balancer your team already runs. No vendor lock-in, no magic platform abstractions, no surprise bills when your site gets a traffic spike.
 
-## Conclusion
-
-Deploying a NextJS app with the App Router beyond Vercel is achievable using Docker and Nginx. This setup creates a deployment environment that allows for control over the infrastructure.
+NextJS without Vercel isn't some act of rebellion. It's just infrastructure. And infrastructure, when you strip away the marketing, is genuinely not that complicated. Keep it boring. Ship your app.

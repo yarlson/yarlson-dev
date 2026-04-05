@@ -7,15 +7,15 @@ tags:
   - cli
 ---
 
-Most internal tooling starts as a bash script hacked together during an outage. It evolves into a Python script, then eventually a compiled binary distributed to the entire engineering org.
+It always starts the same way. Bash script. Outage. 3 AM. Someone hacks together forty lines of curl and jq, commits it with the message "fix prod," and walks away. Six months later that script is a Python binary distributed to 200 engineers, and it still behaves like something written at 3 AM.
 
-The problem is that most of these tools remain "scripts" at heart—fragile, unpredictable, and hostile to automation. To fix this, high-velocity engineering organizations are converging on a rigorous set of design principles—a **Gold Standard** for CLI architecture.
+The gap between "script that works on my machine" and "tool that earns trust in production" is genuinely enormous. But it's not mysterious. High-velocity engineering orgs keep converging on the same set of principles. Call it the **Gold Standard** for CLI architecture.
 
-## The Core Problem: Context Blindness
+## Context Blindness Will Ruin You
 
-Production CLIs serve two masters: the developer at a terminal and the script running in CI. Most tools optimize for one and break the other.
+Your CLI serves two masters: the developer at a terminal and the automation pipeline in CI. Most tools pick one and silently destroy the other.
 
-The **Gold Standard** requires TTY detection—your tool must know whether stdout is connected to a terminal or a pipe, then behave accordingly.
+The fix is TTY detection. Your tool checks whether stdout is connected to a terminal or a pipe, then behaves accordingly. Simple concept. Transformative results.
 
 **Interactive (TTY detected):**
 
@@ -38,18 +38,20 @@ if isatty.IsTerminal(os.Stdout.Fd()) {
 }
 ```
 
-Always provide override flags (`--no-color`, `--force-color`) because auto-detection fails in edge cases like `tmux` sessions or exotic terminal emulators.
+Always ship override flags (`--no-color`, `--force-color`). Auto-detection breaks in `tmux` sessions and exotic terminal emulators. When it breaks, your users need a manual lever.
 
-## The "Return Value" Paradigm: Stdout as Data
+## Stdout Is Your Return Value
 
-Traditional Unix philosophy says "silence is golden"—successful commands should produce no output. The **Gold Standard** introduces a modern model: every command has a return value that belongs on stdout.
+Traditional Unix says "silence is golden." Successful commands produce nothing. That philosophy made sense in the 1970s. It doesn't survive contact with modern infrastructure automation.
+
+The **Gold Standard** introduces a cleaner model: every command has a return value. That value lives on stdout.
 
 **Stream contract:**
 
-- **Stdout:** The data payload—the functional return value
-- **Stderr:** Telemetry and metadata—logs, warnings, progress
+- **Stdout:** The data payload. The functional return value.
+- **Stderr:** Telemetry and metadata. Logs, warnings, progress.
 
-This isn't just about read operations. Write operations return data too:
+This isn't limited to reads. Write operations return data too:
 
 ```bash
 # Create returns the resource object
@@ -61,7 +63,7 @@ cli deploy app-v2
 {"deployment_id": "dep-456", "status": "success", "duration_ms": 2340}
 ```
 
-Progress indicators and logs go to stderr, so pipelines stay clean:
+Progress indicators go to stderr, so pipelines stay clean:
 
 ```bash
 cli create database --name prod-001 --format json | jq -r '.id'
@@ -69,7 +71,11 @@ cli create database --name prod-001 --format json | jq -r '.id'
 # stdout (piped): db-123
 ```
 
-## The Output Matrix: What Goes Where
+Why does this matter so much? Because when you violate it, operators can't pipe output without progress logs corrupting the data stream. The workaround becomes `cli get-resource 2>/dev/null | jq`, which silences actual errors. You've traded one problem for a worse one.
+
+## The Output Matrix
+
+Where does each piece go? Here's the contract:
 
 | Command Type | Example            | Stdout Content                               | Stderr Content                        |
 | ------------ | ------------------ | -------------------------------------------- | ------------------------------------- |
@@ -77,11 +83,11 @@ cli create database --name prod-001 --format json | jq -r '.id'
 | Write        | `create`, `update` | Result object (resource ID, summary)         | Progress bars, "Creating..." logs     |
 | Operational  | `deploy`, `push`   | Final deployment report                      | Streaming build logs, upload progress |
 
-When we violated this, operators couldn't pipe CLI output because progress logs mixed with data. The workaround was `cli get-resource 2>/dev/null | jq`, which silenced actual errors.
+Print this on a wall. Refer to it during code review. Every violation creates a downstream papercut for someone writing automation against your tool.
 
-## Structured Output is Not Optional
+## Structured Output Is a Superpower
 
-Forcing users to parse ASCII tables with `awk` is hostile design. We needed resource IDs from 300 database instances. The existing CLI output looked like this:
+Look, forcing users to parse ASCII tables with `awk` is genuinely hostile. We needed resource IDs from 300 database instances. The existing CLI output looked like this:
 
 ```
 ┌──────────────┬─────────────┬────────┐
@@ -91,7 +97,7 @@ Forcing users to parse ASCII tables with `awk` is hostile design. We needed reso
 └──────────────┴─────────────┴────────┘
 ```
 
-Extracting IDs required fragile regex. Under the **Gold Standard**, structured output is a requirement.
+Extracting IDs required fragile regex that broke every time someone added a column. Under the **Gold Standard**, structured output is non-negotiable:
 
 ```bash
 cli list databases --format json | jq -r '.[].id'
@@ -100,12 +106,12 @@ cli list databases --format json | jq -r '.[].id'
 **Implementation requirements:**
 
 - Global `--format` flag supporting `json`, `yaml`, `text`
-- Consistency across commands—if `list` outputs JSON, `create` must also return structured data
+- Consistency across commands. If `list` outputs JSON, `create` must return structured data too
 - In headless mode, consider defaulting to JSON rather than tables
 
-## Idempotency: Handle Re-runs Gracefully
+## Idempotency: The World Reruns Everything
 
-Network timeouts, script retries, and impatient operators clicking "run" twice are facts of life. Your CLI must not break when commands repeat.
+Network timeouts. Script retries. Impatient operators clicking "run" twice. These aren't edge cases. They're Tuesday.
 
 **Bad (causes duplicate resources):**
 
@@ -117,7 +123,7 @@ cli create database db-prod-001
 # Error: Database db-prod-001 already exists (exit 1)
 ```
 
-The script sees exit code 1 and reports failure, even though the desired state exists.
+The script sees exit code 1 and reports failure, even though the desired state already exists. That's a pager going off at 2 AM for nothing.
 
 **The Gold Standard (idempotent):**
 
@@ -129,11 +135,11 @@ cli create database db-prod-001
 # Success: db-prod-001 already exists (exit 0)
 ```
 
-The goal is state convergence, not action execution. Re-running succeeds with exit 0 because the resource exists—the command achieved its purpose.
+The goal is state convergence, not action execution. Re-running succeeds with exit 0 because the resource exists. The command achieved its purpose. That's the only thing that should matter.
 
-## Dry-Run: Preview Before Destruction
+## Dry-Run: Because You Will Delete the Wrong Thing
 
-Every mutation command needs `--dry-run`. We deleted 40 load balancers because a script had the wrong variable interpolation. A dry-run would have shown the intent before executing it.
+Every mutation command needs `--dry-run`. We deleted 40 load balancers because a script had the wrong variable interpolation. A dry-run flag would have shown us the blast radius before we pulled the trigger.
 
 ```bash
 cli delete resource --filter "env=staging" --dry-run
@@ -147,11 +153,11 @@ cli delete resource --filter "env=staging" --yes
 # Deleted: lb-staging-001, lb-staging-002, lb-staging-003
 ```
 
-Interactive mode prompts for confirmation. Headless mode fails unless `--yes` is explicit. Dry-run executes all validation logic and prints exactly what would happen without altering system state.
+Interactive mode prompts for confirmation. Headless mode fails unless `--yes` is explicit. Dry-run executes all validation logic and prints exactly what would happen without touching system state. Three layers of protection. You need all of them.
 
-## Configuration Hierarchy: Flags Beat Env Vars Beat Files
+## Configuration: Flags Beat Env Vars Beat Files
 
-The precedence order matters for portability across development and production:
+The precedence order exists for a reason, and getting it wrong makes your tool unpredictable across environments:
 
 1. **Command flags** (highest priority): `--region us-west`
 2. **Environment variables**: `CLI_REGION=us-east`
@@ -159,7 +165,7 @@ The precedence order matters for portability across development and production:
 4. **Global config file**: `~/.config/cli/config`
 5. **Defaults** (lowest priority)
 
-This allows local overrides during development while respecting containerized CI environments that rely on environment variables.
+This lets developers override locally while respecting containerized CI environments that pipe configuration through env vars.
 
 ```bash
 # Development: Override with flag
@@ -170,13 +176,19 @@ export CLI_REGION=us-east
 cli deploy
 ```
 
-## Error Messages Must Be Actionable
+But here's the thing most teams miss: document which configuration sources each flag respects. Hidden precedence rules are just bugs you haven't found yet.
+
+## Error Messages That Actually Help
+
+What percentage of your CLI's error messages could a new engineer act on without asking Slack? Be honest.
 
 **Bad:**
 
 ```
 Error: Invalid argument
 ```
+
+This tells you nothing. It's the CLI equivalent of a shrug.
 
 **The Gold Standard:**
 
@@ -190,21 +202,21 @@ Usage: cli delete resource [flags]
 See: [https://docs.example.com/cli/delete-resource](https://docs.example.com/cli/delete-resource)
 ```
 
-We reduced support tickets by 30% after implementing suggestion logic for typos and including documentation URLs in errors. Users need concrete next steps, not vague failure descriptions.
+We reduced support tickets by 30% after implementing typo suggestions and documentation URLs in errors. Users need concrete next steps. Give them the answer, not a riddle.
 
-## Startup Time: First Response Under 100ms
+## Startup Time: 100ms or You've Already Lost
 
-A CLI is part of the development feedback loop. If `cli --help` takes 2 seconds, developers get frustrated.
+A CLI is part of the development feedback loop. If `cli --help` takes 2 seconds, developers will avoid using it. They'll find workarounds. Those workarounds will be worse.
 
-**Trade-offs:**
+**The tradeoffs are real:**
 
-- Native binaries (Go, Rust) start in \<50ms
+- Native binaries (Go, Rust) start in <50ms
 - Python with heavy imports: 200-500ms
 - JVM-based tools: 500-2000ms
 
-For frequently used commands, startup latency compounds. If you must use a slow runtime, implement a daemon mode where the first invocation starts a background process and subsequent calls use IPC to the running daemon.
+For frequently used commands, startup latency compounds fast. If you must use a slow runtime, implement a daemon mode. First invocation starts a background process. Subsequent calls use IPC to the running daemon.
 
-For long-running operations, use **Optimistic UI**—acknowledge the command immediately on stderr ("Request queued...") before the operation completes to prevent the appearance of a hung process.
+For long-running operations, use **Optimistic UI**: acknowledge the command immediately on stderr ("Request queued...") before the operation completes. Nobody should stare at a frozen terminal wondering if the process hung.
 
 ## Standard Interface Patterns
 
@@ -215,10 +227,10 @@ For long-running operations, use **Optimistic UI**—acknowledge the command imm
 - Use `--` to delimit flags from positional arguments
 
 **Predictable verbs:**
-Use standard verb-noun pairings (`get`, `list`, `create`, `delete`) rather than creative synonyms (`fetch`, `show`, `make`, `remove`). Muscle memory should transfer from system tools to your CLI.
+Use standard verb-noun pairings (`get`, `list`, `create`, `delete`) rather than creative synonyms (`fetch`, `show`, `make`, `remove`). Muscle memory is a superpower. Let it transfer from system tools to your CLI without friction.
 
 **Help that teaches:**
-The `--help` output must include concrete, copy-pasteable usage examples, not just flag definitions. Show common workflows:
+The `--help` output must include concrete, copy-pasteable usage examples. Not just flag definitions. Show common workflows:
 
 ```
 Examples:
@@ -231,7 +243,9 @@ Examples:
 
 ## Where This Breaks Down
 
-**Local-only tools:** If your CLI never runs in CI and is purely interactive (like `tig` or `htop`), TTY detection and JSON output are overengineering.
+Not every tool needs the full treatment. Knowing when to skip rules matters as much as knowing the rules.
+
+**Local-only tools:** If your CLI never runs in CI and is purely interactive (like `tig` or `htop`), TTY detection and JSON output are overengineering. Don't build what nobody will use.
 
 **Single-command wrappers:** If the tool does exactly one thing (a `curl` wrapper), progressive disclosure and configuration hierarchy add unnecessary complexity.
 
@@ -248,11 +262,13 @@ Examples:
 - [ ] Implement `--dry-run` for destructive actions
 - [ ] Use standard flag syntax (`-f`, `--force`)
 - [ ] Include "did you mean?" suggestions in errors
-- [ ] Follow configuration precedence: flags \> env \> files \> defaults
-- [ ] Target \<100ms startup time for interactive commands
+- [ ] Follow configuration precedence: flags > env > files > defaults
+- [ ] Target <100ms startup time for interactive commands
 - [ ] Provide `--yes` to skip interactive prompts in scripts
 - [ ] Return structured data on stdout for write operations
 - [ ] Show progress indicators only on stderr
+
+Let's talk about what this all adds up to. TTY awareness, clean stream contracts, structured output, idempotency, dry-run, sane configuration, actionable errors, fast startup, standard interfaces. None of these ideas are novel. Every one of them is a solved problem. But the gap between knowing them and shipping a CLI that actually respects all of them is where most tools fall apart. The Gold Standard isn't about individual features. It's about the discipline of treating your CLI as a contract with every human and machine that will ever call it. Build that contract carefully, and your tool earns something scripts never do: trust.
 
 ## References
 

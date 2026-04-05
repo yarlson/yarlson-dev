@@ -7,21 +7,21 @@ tags:
   - go
 ---
 
-A couple of weeks ago, while working on [ftl](https://github.com/yarlson/ftl), I needed to add progress indicators. Simple spinners, nothing fancy - just a way to show users that something was happening during long-running operations. What followed was an unexpected journey through the Go ecosystem that taught me valuable lessons about choosing the right tools for CLI development.
+I needed a spinner. A loading indicator. The kind of thing that tells a user "hang on, something's happening" while a server gets provisioned or a file gets downloaded. Four lines of code, tops. Instead, I ended up neck-deep in The Elm Architecture, writing message-passing pipelines for a progress dot that spins.
 
-## The Allure of Modern UI Frameworks
+Let's talk about how that happens.
 
-When you start looking for ways to implement CLI interfaces in Go, you'll quickly encounter Bubbletea. Its demos are impressive: beautiful terminal applications with rich interactivity, smooth animations, and elegant state management. The promise of bringing The Elm Architecture to terminal applications is enticing. Who wouldn't want their CLI to be as well-architected as a modern web application?
+## The Demo Trap
 
-This is where the trap lies.
+Search for "Go CLI library" and Bubbletea will find you within thirty seconds. The demos are gorgeous. Smooth animations, rich interactivity, elegant state management borrowed from functional frontend frameworks. It looks like the future of terminal applications, and your brain immediately starts whispering: _wouldn't it be nice if your tool looked like that?_
 
-## The Reality Check: CLI vs UI
+But here's the thing. You're not building a terminal application. You're building a CLI tool. Those are genuinely different things, and treating them as interchangeable is where the wheels come off.
 
-Command-line interfaces are fundamentally different from user interfaces. They follow different patterns, have different user expectations, and serve different purposes. While a web application needs to manage complex state transitions and handle multiple user interactions simultaneously, a CLI tool typically processes commands in a linear fashion.
+## CLIs Are Not UIs
 
-Let's look at a simple example: adding a progress spinner while downloading a file.
+A command-line tool processes commands in a straight line. Start, do work, print output, exit. A user interface manages state across time, handles concurrent interactions, re-renders on change. Bolting a UI architecture onto a linear workflow is like installing a commercial kitchen to make toast.
 
-With a traditional CLI library like chelnak/ysmrr, you might write:
+Look, here's what a spinner should look like in a CLI tool. This uses chelnak/ysmrr:
 
 ```go
 spinner := ysmrr.NewSpinner("Downloading file...")
@@ -31,9 +31,7 @@ downloadFile()
 spinner.Stop()
 ```
 
-Simple, intuitive, and follows the natural flow of CLI operations.
-
-Now, with Bubbletea, you need to:
+Three moving parts. Reads top to bottom. Does what it says. Now here's the Bubbletea version of the same thing:
 
 1. Define your model structure
 2. Implement state update methods
@@ -41,7 +39,7 @@ Now, with Bubbletea, you need to:
 4. Set up message passing
 5. Manage component lifecycle
 
-What should be a few lines of code becomes a complex state machine. Here's what it might look like:
+A spinner. Five architectural decisions. Here's the code:
 
 ```go
 type model struct {
@@ -76,51 +74,42 @@ func (m model) View() string {
 }
 ```
 
-## My Journey Through Libraries
+You wrote a state machine. For a dot that rotates.
 
-Initially, I tried pterm for ftl. While it seemed promising at first, I quickly ran into data race issues. The problem has been documented but remains unresolved. This was a dealbreaker for a tool that needs to be reliable.
+## What I Actually Tried
 
-In my search for alternatives, I explored:
+I was building [ftl](https://github.com/yarlson/ftl) and needed progress indicators. Started with pterm. Seemed fine until it wasn't -- data races, documented but unresolved. Dealbreaker. A CLI tool that crashes randomly is worse than one with no spinner at all.
 
-- **pterm**: Had to abandon it due to data races
-- **briandowns/spinner**: Simple but lacks support for multiple spinners
-- **bubbletea**: Brought unnecessary complexity for simple CLI tasks
-- **chelnak/ysmrr**: The solution I ultimately chose - simple, reliable, and fits CLI patterns
+So I went shopping:
 
-## Why I Chose chelnak/ysmrr
+- **pterm**: Data races. Abandoned.
+- **briandowns/spinner**: Clean, but no support for multiple spinners. Too limited.
+- **bubbletea**: Built a working prototype. Immediately regretted every line.
+- **chelnak/ysmrr**: Simple API, no races, multiple spinners that just work.
 
-After experiencing the issues with more complex solutions, chelnak/ysmrr was exactly what I needed:
+The pattern here is obvious. The libraries that tried to be more ended up delivering less. The one that stayed focused on the actual problem solved it completely.
 
-1. **Simplicity**: The API follows traditional CLI patterns
-2. **Reliability**: No data races or complex state management
-3. **Maintainability**: The code remains clear and straightforward
-4. **Multiple Spinners**: When I needed them, they just worked
+## Why ysmrr Won
 
-## Lessons Learned
+Simplicity is a superpower. The API follows traditional CLI patterns -- start thing, do work, stop thing. No data races because there's no complex state to race over. The code stays readable six months later because there's nothing clever in it. When I needed multiple spinners, they worked without a migration to a different mental model.
 
-1. **Match the Tool to the Task**: CLI tools don't need UI frameworks. They need libraries that support common CLI patterns.
+That's it. That's the whole pitch. It does the job and gets out of the way.
 
-2. **Consider the Full Cost**: The true cost of a framework isn't just in the initial implementation - it's in the ongoing maintenance, debugging, and cognitive overhead.
+## So When Does Bubbletea Make Sense?
 
-3. **Value Simplicity**: In CLI development, simple and reliable beats feature-rich and complex.
+Bubbletea is genuinely excellent software built for a specific purpose. If you're creating a full-screen terminal application -- a file manager, a database browser, a text editor -- it's the right call. The Elm Architecture earns its keep when you have real state to manage across real user interactions.
 
-4. **Trust Traditional Patterns**: CLI patterns have evolved over decades. There's usually a good reason why they work the way they do.
+But how many of us are building terminal text editors? Most Go CLI tools run a command, do a thing, and exit. That workflow doesn't need an architecture. It needs a library.
 
-## When Might You Want Bubbletea?
+## The Uncomfortable Truth
 
-Bubbletea isn't a bad framework - it's just often used for the wrong purposes. Consider it when:
+The framework instinct is strong in this industry. We reach for the most powerful tool available because it feels responsible. Professional. But power you don't need isn't free. It's complexity you carry, bugs you debug, abstractions you explain to the next person who opens your code.
 
-- Building a full-screen terminal user interface
-- Creating an interactive application with complex state
-- Developing a terminal-based game or rich text editor
+CLI tools have worked a certain way for decades. Linear execution, simple output, predictable behavior. Those patterns survived because they're right. Wrapping them in a reactive UI framework doesn't improve them. It just makes them harder to maintain.
 
-But for typical CLI tools? Stick with libraries that match CLI patterns.
+Matching the tool to the task -- actually matching it, not reaching for the impressive option -- is the skill that separates shipping software from architecture tourism. Your CLI doesn't want to be a web app. Let it be a CLI.
 
-## Conclusion
-
-The next time you're adding features to your CLI tool, resist the urge to reach for a UI framework. Consider whether a simpler, more focused library might be a better fit. Your future self will thank you for it.
-
-Remember: Just because you can build your CLI like a web application doesn't mean you should.
+Build the simple thing. Ship it. Move on.
 
 ## Resources
 

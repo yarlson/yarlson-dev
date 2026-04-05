@@ -3,4 +3,4 @@ name: LLM
 description: Large language models and their practical applications
 ---
 
-Posts about building, evaluating, and operating large language models, including prompting patterns, safety considerations, and real-world integration approaches.
+AI-assisted workflows, agentic coding, and the messy reality of shipping software with LLMs. What works, what doesn't, and what people get wrong.
