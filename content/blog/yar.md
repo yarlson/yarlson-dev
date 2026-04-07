@@ -6,6 +6,7 @@ date: "2026-04-01"
 tags:
   - go
   - llm
+pinned: true
 ---
 
 ![Yar](./images/yar-banner.jpg)

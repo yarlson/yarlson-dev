@@ -198,6 +198,56 @@ h3 {
   font-size: 0.9rem;
 }
 
+/* Featured / Pinned posts */
+.featured-section {
+  margin-top: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+.featured-posts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 0 1rem;
+}
+.featured-card {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: 1 / -1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0.5rem;
+  padding: 1rem 1rem 1rem 1.25rem;
+}
+.featured-card .post-title {
+  margin: 0;
+  align-self: start;
+}
+.featured-card .muted {
+  margin: 0;
+  align-self: start;
+  padding-top: 0.5rem;
+}
+.featured-card .summary {
+  margin: 0;
+  align-self: start;
+  padding-top: 0.75rem;
+  color: var(--fg);
+}
+@media (max-width: 640px) {
+  .featured-posts {
+    grid-template-columns: 1fr;
+  }
+}
+
 .post-list {
   margin: 1.25rem 0 0;
   padding: 0;

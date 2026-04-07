@@ -5,6 +5,7 @@ postLayout: simple
 date: "2025-01-18"
 tags:
   - docker
+pinned: true
 ---
 
 Deployment tools eventually disappoint you. Either it's a shell script held together with `rsync` and prayers, or it's a full Kubernetes cluster for an app that serves maybe forty requests per second. I spent years living in that gap — running docker-compose in production, stitching together custom deploy scripts, and pretending it was fine. It wasn't fine.
