@@ -3,9 +3,10 @@
 {{ $pinned := where $allPosts ".Params.pinned" true }}
 {{ $regular := $allPosts | complement $pinned }}
 
+<p class="site-tagline">I build tools, design languages, and write about the things that quietly break in prod.</p>
+
 {{ with $pinned }}
-<section class="featured-section" aria-labelledby="featured-title">
-  <h2 id="featured-title" class="section-label">Featured</h2>
+<section class="featured-section" aria-label="Featured posts">
   <div class="featured-posts">
     {{ range . }}
     <article class="featured-card">

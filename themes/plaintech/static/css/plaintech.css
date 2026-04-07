@@ -198,6 +198,13 @@ h3 {
   font-size: 0.9rem;
 }
 
+.site-tagline {
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.5rem);
+  line-height: 1.4;
+  color: var(--muted);
+  margin: 2rem 0 0;
+}
+
 /* Featured / Pinned posts */
 .featured-section {
   margin-top: 1.5rem;
@@ -216,6 +223,14 @@ h3 {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto auto;
   gap: 0 1rem;
+  margin-left: -5rem;
+  margin-right: -5rem;
+}
+@media (max-width: 640px) {
+  .featured-posts {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
 .featured-card {
   display: grid;
