@@ -3,6 +3,9 @@
 {{ $pinned := where $allPosts ".Params.pinned" true }}
 {{ $regular := $allPosts | complement $pinned }}
 
+{{ $paginator := .Paginate $regular }}
+
+{{ if eq $paginator.PageNumber 1 }}
 <p class="site-tagline">I build tools, design languages, and write about the things that quietly break in prod.</p>
 
 {{ with $pinned }}
@@ -21,11 +24,11 @@
   </div>
 </section>
 {{ end }}
-
+{{ end }}
 <section aria-labelledby="home-title">
   <h2 id="home-title" class="section-label">Latest Posts</h2>
   <ul class="post-list" role="list">
-    {{ range first 12 $regular }}
+    {{ range $paginator.Pages }}
     <li>
       <article class="post-card">
         <h2 class="post-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
@@ -38,5 +41,6 @@
     </li>
     {{ end }}
   </ul>
+  {{ template "_internal/pagination.html" . }}
 </section>
 {{ end }}
