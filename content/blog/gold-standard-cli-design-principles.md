@@ -5,6 +5,7 @@ postLayout: simple
 date: "2025-12-09"
 tags:
   - cli
+pinned: true
 ---
 
 It always starts the same way. Bash script. Outage. 3 AM. Someone hacks together forty lines of curl and jq, commits it with the message "fix prod," and walks away. Six months later that script is a Python binary distributed to 200 engineers, and it still behaves like something written at 3 AM.
