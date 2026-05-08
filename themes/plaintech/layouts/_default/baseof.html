@@ -4,21 +4,29 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
-  <title>{{ block "title" . }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
-  {{/* Build a robust meta description: page.description → page summary → site param */}}
+  <title>{{ block "title" . }}{{ if .IsHome }}{{ site.Params.author }} — CTO-level engineer and technical founder{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}{{ end }}</title>
+
+  {{/* Build a robust meta description: page.description → page.summary → page summary → site param */}}
   {{- $desc := "" -}}
   {{- with .Params.description -}}
     {{- $desc = (. | plainify | truncate 160) -}}
   {{- else -}}
-    {{- if .IsPage -}}
-      {{- $desc = (.Summary | plainify | truncate 160) -}}
+    {{- with .Params.summary -}}
+      {{- $desc = (. | plainify | truncate 160) -}}
     {{- else -}}
-      {{- with site.Params.description -}}{{- $desc = (. | plainify | truncate 160) -}}{{- end -}}
+      {{- if .IsPage -}}
+        {{- $desc = (.Summary | plainify | truncate 160) -}}
+      {{- else -}}
+        {{- with site.Params.description -}}{{- $desc = (. | plainify | truncate 160) -}}{{- end -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
-  {{- if $desc }}<meta name="description" content="{{ $desc }}" />{{ end -}}
+  {{- if $desc }}<meta name="description" content="{{ $desc }}" />{{ end }}
   {{ with site.Params.author }}<meta name="author" content="{{ . }}" />{{ end }}
+  {{ with site.Params.keywords }}<meta name="keywords" content="{{ delimit . ", " }}" />{{ end }}
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   <link rel="stylesheet" href="{{ "/css/plaintech.css" | absURL }}" />
+  <link rel="alternate" type="application/rss+xml" title="{{ site.Title }} RSS" href="{{ "index.xml" | absURL }}" />
   {{/* Canonical URL */}}
   {{ if .Params.canonical }}
     <link rel="canonical" href="{{ .Params.canonical }}" />
@@ -26,6 +34,7 @@
     <link rel="canonical" href="{{ .Permalink }}" />
   {{ end }}
   {{ partial "opengraph.html" . }}
+  {{ partial "schema.html" . }}
   <script defer src="{{ "/js/copycode.js" | absURL }}"></script>
 </head>
 <body>

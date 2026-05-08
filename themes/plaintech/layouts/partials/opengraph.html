@@ -3,6 +3,36 @@
    - For home: uses site description; for pages: uses page title
    - Optional .Params.thumbnail (page resource) is overlaid top-right
 */}}
+{{- $desc := "" -}}
+{{- with .Params.description -}}
+  {{- $desc = (. | plainify | truncate 200) -}}
+{{- else -}}
+  {{- with .Params.summary -}}
+    {{- $desc = (. | plainify | truncate 200) -}}
+  {{- else -}}
+    {{- if .IsPage -}}
+      {{- $desc = (.Summary | plainify | truncate 200) -}}
+    {{- else -}}
+      {{- $desc = (site.Params.description | default site.Title | plainify | truncate 200) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $ogTitle := cond .IsHome site.Title .Title -}}
+{{- $ogType := cond .IsPage "article" "website" -}}
+<meta property="og:title" content="{{ $ogTitle }}" />
+<meta property="og:description" content="{{ $desc }}" />
+<meta property="og:type" content="{{ $ogType }}" />
+<meta property="og:url" content="{{ .Permalink }}" />
+<meta property="og:site_name" content="{{ site.Title }}" />
+{{ with site.Language.LanguageCode }}<meta property="og:locale" content="{{ replace . "-" "_" }}" />{{ end }}
+{{ if .IsPage }}
+  {{ with .Date }}<meta property="article:published_time" content="{{ .Format "2006-01-02T15:04:05Z07:00" }}" />{{ end }}
+  {{ with .Lastmod }}<meta property="article:modified_time" content="{{ .Format "2006-01-02T15:04:05Z07:00" }}" />{{ end }}
+  {{ range .Params.tags }}<meta property="article:tag" content="{{ . }}" />{{ end }}
+{{ end }}
+{{ with site.Params.twitter }}<meta name="twitter:site" content="{{ . }}" />{{ end }}
+{{ with site.Params.twitter }}<meta name="twitter:creator" content="{{ . }}" />{{ end }}
+
 {{/* If base image missing or not an image, bail safely */}}
 {{ $base := resources.Get "og_base.png" }}
 {{ if and $base (eq $base.MediaType.Type "image/png") }}
@@ -35,14 +65,14 @@
     "y" 120
   ))}}
   {{ $img = resources.Copy (path.Join $.RelPermalink "og.png") $img }}
-  <meta property="og:image" content="{{$img.Permalink}}">
-  <meta property="og:image:width" content="{{$img.Width}}" />
-  <meta property="og:image:height" content="{{$img.Height}}" />
+  <meta property="og:image" content="{{ $img.Permalink }}" />
+  <meta property="og:image:width" content="{{ $img.Width }}" />
+  <meta property="og:image:height" content="{{ $img.Height }}" />
+  <meta property="og:image:alt" content="{{ $ogTitle }}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="{{ $.Title }}" />
-  <meta name="twitter:description" content="{{ with $.Description }}{{ . }}{{ else }}{{if $.IsPage}}{{ $.Summary }}{{ else }}{{ with $.Site.Params.description }}{{ . }}{{ end }}{{ end }}{{ end -}}"/>
-  <meta name="twitter:image" content="{{$img.Permalink}}" />
-  <meta name="x-og-debug" content="generated: {{ $img.RelPermalink }} {{ $img.Width }}x{{ $img.Height }}" />
+  <meta name="twitter:title" content="{{ $ogTitle }}" />
+  <meta name="twitter:description" content="{{ $desc }}" />
+  <meta name="twitter:image" content="{{ $img.Permalink }}" />
 {{ else }}
-  <meta name="x-og-debug" content="missing or invalid: assets/og_base.png; need 1200x630 PNG" />
+  <meta name="twitter:card" content="summary" />
 {{ end }}

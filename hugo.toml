@@ -1,7 +1,42 @@
 baseURL = 'https://yarlson.dev/'
 languageCode = 'en-us'
-title = "Yar Kravtsov's Blog"
+title = "Yar Kravtsov — CTO-level Engineer and Technical Founder"
 theme = 'plaintech'
+summaryLength = 35
+
+[params]
+  author = "Yar Kravtsov"
+  description = "CTO-level engineer and technical founder writing about AI agents, Go, infrastructure, CLI tools, Docker, CI/CD, developer platforms, and technical leadership."
+  linkedin = "https://www.linkedin.com/in/yaroslav-kravtsov/"
+  github = "https://github.com/yarlson"
+  twitter = "@yarlson"
+  keywords = [
+    "Yar Kravtsov",
+    "Yaroslav Kravtsov",
+    "CTO",
+    "technical founder",
+    "technology founder",
+    "engineering leadership",
+    "AI agents",
+    "Go engineering",
+    "infrastructure",
+    "developer platforms",
+    "CLI tools",
+    "Docker",
+    "CI/CD"
+  ]
+  jobTitle = "CTO-level Engineer and Technical Founder"
+
+[related]
+  includeNewer = true
+  threshold = 20
+  toLower = true
+  [[related.indices]]
+    name = 'tags'
+    weight = 100
+  [[related.indices]]
+    name = 'date'
+    weight = 10
 
 [markup]
   [markup.highlight]
