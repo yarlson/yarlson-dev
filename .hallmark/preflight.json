@@ -1,0 +1,14 @@
+{
+  "scanned_at": "2026-06-06",
+  "framework": "Hugo",
+  "theme": "plaintech",
+  "font_stack": "theme CSS custom properties",
+  "palette": "OKLCH custom properties",
+  "motion": "motion-cut",
+  "spacing": "CSS custom properties",
+  "preserve": [
+    "Hugo route and partial ownership",
+    "content files",
+    "site information architecture"
+  ]
+}

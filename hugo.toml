@@ -40,5 +40,5 @@ summaryLength = 35
     style = 'dracula'
     guessSyntax = true
     lineNos = false
-    noClasses = true
+    noClasses = false
     tabWidth = 2

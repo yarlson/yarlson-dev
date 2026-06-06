@@ -1,29 +1,10 @@
 {{ define "main" }}
 {{ $allPosts := where .Site.RegularPages "Type" "in" (slice "blog" "post") }}
-{{ $pinned := where $allPosts ".Params.pinned" true }}
-{{ $regular := $allPosts | complement $pinned }}
 
-{{ $paginator := .Paginate $regular }}
+{{ $paginator := .Paginate $allPosts }}
 
 {{ if eq $paginator.PageNumber 1 }}
 <p class="site-tagline">I write about backend systems, coding agents, infrastructure, CLI tools, and the boring details that decide whether software works in production.</p>
-
-{{ with $pinned }}
-<section class="featured-section" aria-label="Featured posts">
-  <div class="featured-posts">
-    {{ range . }}
-    <article class="featured-card">
-      <h3 class="post-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-      <p class="muted">
-        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>
-        {{ with .Params.tags }}· {{ range $i, $t := . }}{{ if $i }}, {{ end }}<a class="tag" href="{{ (site.GetPage (printf "/tags/%s" $t)).RelPermalink }}">{{ $t }}</a>{{ end }}{{ end }}
-      </p>
-      {{ with .Summary }}<p class="summary">{{ . }}</p>{{ end }}
-    </article>
-    {{ end }}
-  </div>
-</section>
-{{ end }}
 {{ end }}
 <section aria-labelledby="home-title">
   <h2 id="home-title" class="section-label">Latest writing</h2>

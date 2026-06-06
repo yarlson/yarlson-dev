@@ -1,33 +1,35 @@
 (() => {
   // Progressive enhancement: only run if Clipboard API is supported
-  if (!('clipboard' in navigator)) return;
-  const CODE_SELECTOR = '.code-block';
+  if (!("clipboard" in navigator)) return;
+  const CODE_SELECTOR = ".code-block";
 
   function enhance(block) {
-    const button = block.querySelector('.copy-btn');
-    const codeEl = block.querySelector('pre > code');
+    const button = block.querySelector(".copy-btn");
+    const codeEl = block.querySelector("pre > code");
     if (!button || !codeEl) return;
 
     // Improve button accessibility
-    button.setAttribute('aria-live', 'polite');
+    button.setAttribute("aria-live", "polite");
 
-    button.addEventListener('click', async () => {
+    button.addEventListener("click", async () => {
       try {
         const text = codeEl.innerText;
         await navigator.clipboard.writeText(text);
-        const original = button.querySelector('.copy-label');
+        const original = button.querySelector(".copy-label");
         if (original) {
           const oldText = original.textContent;
-          original.textContent = 'Copied';
-          button.classList.add('copied');
+          original.textContent = "Copied";
+          button.classList.add("copied");
           setTimeout(() => {
-            original.textContent = oldText || 'Copy';
-            button.classList.remove('copied');
+            original.textContent = oldText || "Copy";
+            button.classList.remove("copied");
           }, 1600);
         }
       } catch (err) {
         // Fallback UI on failure
-        button.querySelector('.copy-label')?.insertAdjacentText('afterend', ' (press Cmd/Ctrl+C)');
+        button
+          .querySelector(".copy-label")
+          ?.insertAdjacentText("afterend", " (press Cmd/Ctrl+C)");
       }
     });
   }
@@ -43,5 +45,8 @@
       });
     }
   });
-  observer.observe(document.documentElement, { subtree: true, childList: true });
+  observer.observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+  });
 })();

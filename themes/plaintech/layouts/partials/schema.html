@@ -1,71 +1,39 @@
-{{- $authorName := site.Params.author | default "Yar Kravtsov" -}}
-{{- $desc := "" -}}
-{{- with .Params.description -}}
-  {{- $desc = (. | plainify) -}}
-{{- else -}}
-  {{- with .Params.summary -}}
-    {{- $desc = (. | plainify) -}}
-  {{- else -}}
-    {{- if .IsPage -}}
-      {{- $desc = (.Summary | plainify) -}}
-    {{- else -}}
-      {{- $desc = (site.Params.description | default site.Title | plainify) -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{- $sameAs := slice -}}
-{{- with site.Params.github }}{{ $sameAs = $sameAs | append . }}{{ end -}}
-{{- with site.Params.linkedin }}{{ $sameAs = $sameAs | append . }}{{ end -}}
-{{- with site.Params.twitter }}{{ $sameAs = $sameAs | append (printf "https://x.com/%s" (strings.TrimPrefix "@" .)) }}{{ end -}}
-{{- $knowsAbout := site.Params.keywords | default (slice "AI agents" "Go engineering" "infrastructure" "developer platforms" "backend systems") -}}
-{{- $person := dict
-  "@type" "Person"
-  "name" $authorName
-  "alternateName" "Yaroslav Kravtsov"
-  "url" site.BaseURL
-  "sameAs" $sameAs
-  "jobTitle" (site.Params.jobTitle | default "Senior Software Engineer")
-  "knowsAbout" $knowsAbout
--}}
-{{- if .IsPage -}}
-  {{- $image := "" -}}
-  {{- with resources.Get "og_base.png" }}{{ $image = .Permalink }}{{ end -}}
-  {{- if eq .Type "about" -}}
-    {{- $data := dict
-      "@context" "https://schema.org"
-      "@type" "ProfilePage"
-      "name" .Title
-      "description" $desc
-      "url" .Permalink
-      "mainEntity" $person
-    -}}
-    <script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
-  {{- else -}}
-    {{- $data := dict
-      "@context" "https://schema.org"
-      "@type" "BlogPosting"
-      "headline" .Title
-      "description" $desc
-      "url" .Permalink
-      "mainEntityOfPage" .Permalink
-      "datePublished" (.Date.Format "2006-01-02T15:04:05Z07:00")
-      "dateModified" (.Lastmod.Format "2006-01-02T15:04:05Z07:00")
-      "author" $person
-      "publisher" $person
-      "keywords" (delimit (.Params.tags | default site.Params.keywords) ", ")
-    -}}
-    {{- with $image }}{{ $data = merge $data (dict "image" .) }}{{ end -}}
-    <script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
-  {{- end -}}
-{{- else -}}
-  {{- $data := dict
-    "@context" "https://schema.org"
-    "@type" "Blog"
-    "name" site.Title
-    "description" $desc
-    "url" site.BaseURL
-    "author" $person
-    "publisher" $person
-  -}}
-  <script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
+{{- $authorName := site.Params.author | default "Yar Kravtsov" -}} {{- $desc :=
+"" -}} {{- with .Params.description -}} {{- $desc = (. | plainify) -}} {{- else
+-}} {{- with .Params.summary -}} {{- $desc = (. | plainify) -}} {{- else -}} {{-
+if .IsPage -}} {{- $desc = (.Summary | plainify) -}} {{- else -}} {{- $desc =
+(site.Params.description | default site.Title | plainify) -}} {{- end -}} {{-
+end -}} {{- end -}} {{- $sameAs := slice -}} {{- with site.Params.github }}{{
+$sameAs = $sameAs | append . }}{{ end -}} {{- with site.Params.linkedin }}{{
+$sameAs = $sameAs | append . }}{{ end -}} {{- with site.Params.twitter }}{{
+$sameAs = $sameAs | append (printf "https://x.com/%s" (strings.TrimPrefix "@"
+.)) }}{{ end -}} {{- $knowsAbout := site.Params.keywords | default (slice "AI
+agents" "Go engineering" "infrastructure" "developer platforms" "backend
+systems") -}} {{- $person := dict "@type" "Person" "name" $authorName
+"alternateName" "Yaroslav Kravtsov" "url" site.BaseURL "sameAs" $sameAs
+"jobTitle" (site.Params.jobTitle | default "Senior Software Engineer")
+"knowsAbout" $knowsAbout -}} {{- if .IsPage -}} {{- $image := "" -}} {{- with
+resources.Get "og_base.png" }}{{ $image = .Permalink }}{{ end -}} {{- if eq
+.Type "about" -}} {{- $data := dict "@context" "https://schema.org" "@type"
+"ProfilePage" "name" .Title "description" $desc "url" .Permalink "mainEntity"
+$person -}}
+<script type="application/ld+json">
+  {{ $data | jsonify | safeJS }}
+</script>
+{{- else -}} {{- $data := dict "@context" "https://schema.org" "@type"
+"BlogPosting" "headline" .Title "description" $desc "url" .Permalink
+"mainEntityOfPage" .Permalink "datePublished" (.Date.Format
+"2006-01-02T15:04:05Z07:00") "dateModified" (.Lastmod.Format
+"2006-01-02T15:04:05Z07:00") "author" $person "publisher" $person "keywords"
+(delimit (.Params.tags | default site.Params.keywords) ", ") -}} {{- with $image
+}}{{ $data = merge $data (dict "image" .) }}{{ end -}}
+<script type="application/ld+json">
+  {{ $data | jsonify | safeJS }}
+</script>
+{{- end -}} {{- else -}} {{- $data := dict "@context" "https://schema.org"
+"@type" "Blog" "name" site.Title "description" $desc "url" site.BaseURL "author"
+$person "publisher" $person -}}
+<script type="application/ld+json">
+  {{ $data | jsonify | safeJS }}
+</script>
 {{- end -}}

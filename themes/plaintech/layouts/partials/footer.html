@@ -1,6 +1,10 @@
 <footer class="site-footer" role="contentinfo">
   <div class="container footer-inner">
-    <p>© {{ now.Year }} {{ site.Title }}</p>
+    <p>
+      {{ site.Title }} · {{ now.Year }} · built with Hugo · writing about
+      backend systems, agents, infrastructure, CLI tools, and production
+      details.
+    </p>
     {{ with site.Params.social }}
     <ul class="social">
       {{ range . }}

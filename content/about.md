@@ -12,7 +12,7 @@ linkedin: https://www.linkedin.com/in/yaroslav-kravtsov/
 github: https://github.com/yarlson
 ---
 
-I've been writing software for more than 27 years. Most of that time has been backends, infrastructure, and developer tooling. Go these days, plenty of other things before that.
+I've been writing software for almost three decades. Most of that time has been backends, infrastructure, and developer tooling. Go these days, plenty of other things before that.
 
 I build AI agent workflows, CLI tools, deployment pipelines, and occasionally things nobody asked for, like a programming language with its own compiler and garbage collector.
 

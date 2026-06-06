@@ -1,0 +1,68 @@
+/* Hallmark tokens · theme: Terminal · paper-band: dark · display-style: mono · accent-hue: phosphor */
+:root {
+  --color-paper: oklch(15% 0.022 145);
+  --color-paper-2: oklch(18% 0.026 145);
+  --color-paper-3: oklch(22% 0.03 145);
+  --color-ink: oklch(91% 0.03 132);
+  --color-ink-2: oklch(74% 0.035 136);
+  --color-muted: oklch(63% 0.035 140);
+  --color-rule: oklch(36% 0.045 145);
+  --color-accent: oklch(82% 0.17 142);
+  --color-accent-2: oklch(72% 0.12 190);
+  --color-accent-ink: oklch(14% 0.024 145);
+  --color-focus: oklch(82% 0.17 142);
+  --color-code-paper: oklch(12% 0.022 145);
+  --syntax-keyword: oklch(82% 0.17 142);
+  --syntax-string: oklch(84% 0.12 92);
+  --syntax-function: oklch(80% 0.14 165);
+  --syntax-type: oklch(80% 0.12 190);
+  --syntax-number: oklch(82% 0.12 285);
+  --syntax-comment: oklch(58% 0.04 140);
+  --syntax-operator: oklch(78% 0.13 142);
+  --shadow-control: 0 0 0 var(--rule-hair)
+    color-mix(in oklab, var(--color-accent) 28%, transparent);
+
+  --font-display:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono",
+    "Liberation Mono", monospace;
+  --font-body:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono",
+    "Liberation Mono", monospace;
+  --font-prose:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono",
+    "Liberation Mono", monospace;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+
+  --rule-hair: 1px;
+  --rule-strong: 2px;
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.5rem;
+}

@@ -1,32 +1,18 @@
 <header class="site-header" role="banner">
   <div class="container header-inner">
-    {{/* Resolve avatar: prefer About page param; fallback to site param */}}
-    {{ $avatar := site.Params.avatar }}
-    {{ with site.GetPage "/about" }}
-      {{ with .Params.avatar }}{{ $avatar = . }}{{ end }}
-    {{ end }}
-
     <a class="brand" href="{{ "/" | relURL }}">
-      {{ if $avatar }}
-        {{- $src := "" -}}
-        {{- if (strings.HasPrefix $avatar "/assets/") -}}
-          {{- with resources.Get (strings.TrimPrefix "/assets/" $avatar) -}}
-            {{- $src = .RelPermalink -}}
-          {{- end -}}
-        {{- else -}}
-          {{- $src = ($avatar | relURL) -}}
-        {{- end -}}
-        <span class="brand-icon" aria-hidden="true"><img class="site-avatar" src="{{ $src }}" alt="" loading="eager" fetchpriority="high" decoding="async" /></span>
-      {{ end }}
+      <span class="prompt" aria-hidden="true">$</span>
       <span class="site-title">{{ site.Title }}</span>
     </a>
 
     <nav class="site-nav" role="navigation" aria-label="Primary">
+      <span class="nav-command" aria-hidden="true">open</span>
       <ul>
-        <li><a href="{{ "/" | relURL }}">Writing</a></li>
-        <li><a href="{{ "/tags/" | relURL }}">Topics</a></li>
-        <li><a href="{{ "/about/" | relURL }}">About</a></li>
+        <li><a href="{{ "/" | relURL }}">--writing</a></li>
+        <li><a href="{{ "/tags/" | relURL }}">--topics</a></li>
+        <li><a href="{{ "/about/" | relURL }}">--about</a></li>
       </ul>
+      <span class="caret" aria-hidden="true"></span>
     </nav>
   </div>
 </header>
