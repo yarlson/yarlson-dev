@@ -18,7 +18,7 @@
         {{- else -}}
           {{- $src = ($path | relURL) -}}
         {{- end -}}
-        <img class="avatar-lg" src="{{ $src }}" alt="{{ $name }}" loading="lazy" decoding="async" />
+        <img class="avatar-lg" src="{{ $src }}" alt="{{ $name }}" loading="eager" fetchpriority="high" decoding="async" />
       {{ end }}
       <div class="about-ident">
         {{ with $name }}<h1 class="about-name">{{ . }}</h1>{{ end }}

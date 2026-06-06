@@ -26,7 +26,7 @@
   {{ with site.Params.keywords }}<meta name="keywords" content="{{ delimit . ", " }}" />{{ end }}
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   {{ with resources.Get "yar.jpg" }}<link rel="icon" type="image/jpeg" href="{{ .RelPermalink }}" />{{ end }}
-  <link rel="stylesheet" href="{{ "/css/plaintech.css" | absURL }}" />
+  <link rel="stylesheet" href="{{ "/css/plaintech.css" | relURL }}" />
   <link rel="alternate" type="application/rss+xml" title="{{ site.Title }} RSS" href="{{ "index.xml" | absURL }}" />
   {{/* Canonical URL */}}
   {{ if .Params.canonical }}
@@ -36,7 +36,7 @@
   {{ end }}
   {{ partial "opengraph.html" . }}
   {{ partial "schema.html" . }}
-  <script defer src="{{ "/js/copycode.js" | absURL }}"></script>
+  <script defer src="{{ "/js/copycode.js" | relURL }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#content">Skip to content</a>

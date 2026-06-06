@@ -16,7 +16,7 @@
         {{- else -}}
           {{- $src = ($avatar | relURL) -}}
         {{- end -}}
-        <span class="brand-icon" aria-hidden="true"><img class="site-avatar" src="{{ $src }}" alt="" loading="lazy" decoding="async" /></span>
+        <span class="brand-icon" aria-hidden="true"><img class="site-avatar" src="{{ $src }}" alt="" loading="eager" fetchpriority="high" decoding="async" /></span>
       {{ end }}
       <span class="site-title">{{ site.Title }}</span>
     </a>
