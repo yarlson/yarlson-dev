@@ -1,6 +1,6 @@
 ---
 title: "AI Coding Agents Need a Source of Truth"
-summary: "Bigger prompts do not fix bad agent plans. A good agent workflow starts with a small brief, human review, task sizing, and checks against concrete artifacts."
+summary: "Bigger prompts do not fix drifting agent plans. A good workflow starts with a small brief, human review, task sizing, and checks against real artifacts."
 postLayout: simple
 date: "2026-05-08"
 tags:
@@ -8,109 +8,109 @@ tags:
   - ai
 ---
 
-When an AI coding agent makes a bad plan, the first reaction is usually to add more prompt.
+When an AI coding agent makes a bad plan, the usual fix is "add more prompt."
 
-Add more rules. Add more examples. Add more principles. Tell it to be careful. Tell it not to hallucinate. Tell it to follow every engineering acronym we have collected over the last twenty years.
+More rules. More examples. More warnings. Tell it to be careful. Tell it not to hallucinate. Tell it to respect every engineering acronym we have collected over the last twenty years.
 
-Sometimes that helps a little.
+Sometimes that helps a bit.
 
-Most of the time it hides the real problem.
+Usually it hides the actual problem.
 
-The agent does not need a longer prompt. It needs a source of truth.
+The agent does not need a bigger prompt. It needs something true to anchor against.
 
 ## A big prompt is not a plan
 
-Long prompts can look serious. They have sections, rules, rubrics, and warnings. They sound like process.
+Long prompts can look serious. They have sections, rules, rubrics, and stern little warnings. They feel like process.
 
-But a long prompt does not mean the agent knows what is true.
+But they do not make the task true.
 
-If the task is vague, the agent will fill the gaps. It will invent files. It will invent requirements. It will add tasks that sound useful but do not match the actual goal.
+If the task is vague, the agent fills the gaps. It invents files. It invents requirements. It adds tasks that sound useful but do not match the goal.
 
-This is the worst kind of wrong: plausible wrong.
+That is the expensive kind of wrong: plausible wrong.
 
-Obviously bad output is easy to reject. Plausible wrong output wastes time. You have to read it carefully, compare it with the real task, and find the places where it drifted.
+Obviously bad output is easy to reject. Plausible wrong output wastes time. You have to compare it against the real task, find the drift, and explain why the confident plan is nonsense.
 
-At that point the human is doing the grounding work manually.
+At that point the human is doing the grounding manually.
 
-That is the part the workflow should handle.
+The workflow should do that before the agent starts planning.
 
 ## Start with a brief
 
 Before the agent writes a plan, make it write a brief.
 
-Not a big document. Not a fake product spec. Just a small file that says what is known.
-
-Example:
+Not a fake product spec. Not a thirty-page ceremony. Just a small file that says what is known.
 
 ```markdown
 # Brief
 
 Goal:
+
 - Add CSV import for contacts.
 
 Expected behavior:
+
 - User can upload a CSV file.
 - The app validates required columns.
 - Invalid rows are shown before import.
 - Valid rows can be saved.
 
 Non-goals:
+
 - No Excel support.
 - No background jobs.
 - No new schema editor.
 
 Open questions:
+
 - Maximum file size?
 - Should duplicate rows be skipped or rejected?
 ```
 
-This is simple. That is why it works.
+This is boring. That is why it works.
 
 Now the agent has something to compare against. A task is either supported by the brief or it is not. A feature is either in scope or it is not. An assumption is either written down or it is not.
 
-Without a brief, the agent works from vibes.
+Without the brief, the agent works from vibes.
 
-With a brief, it has ground.
+With the brief, it has ground.
 
 ## The human should edit the brief
 
-The important step is not that the agent writes the brief.
+The important part is not that the agent writes the brief.
 
-The important step is that the human reviews it before planning starts.
+The important part is that a human reviews it before planning starts.
 
-This catches the cheap mistakes early. Maybe the agent misunderstood the goal. Maybe it added a non-goal. Maybe it missed a constraint. Maybe there is an open question that must be answered first.
+This catches cheap mistakes while they are still cheap. Maybe the agent misunderstood the goal. Maybe it quietly added a non-goal. Maybe it missed a constraint. Maybe an open question blocks the whole thing.
 
-Fixing that in the brief takes one minute.
+Fixing that in the brief takes a minute.
 
-Fixing it after the agent writes code can take hours.
+Fixing it after the agent has written code can take hours.
 
-This pause can feel slow, but it is not slow. It is the cheapest place to correct the direction.
-
-Bad direction gets more expensive at every step.
+This pause feels slow only if you ignore the downstream cost. Bad direction gets more expensive at every step.
 
 ## Size the task before planning it
 
-Not every task needs the same workflow.
+Not every task deserves the same workflow.
 
-Some tasks are tiny. Change a label. Fix one error message. Add a missing flag. These should not become a large plan.
+Some tasks are tiny. Change a label. Fix one error message. Add a missing flag. These should not become a five-part architecture plan.
 
-Some tasks are medium. Add a small feature. Change one flow. Refactor one package. These need a short checklist and tests.
+Some tasks are medium. Add a small feature. Change one flow. Refactor one package. These need a short checklist and a real verification step.
 
-Some tasks are large. They touch many files, have tradeoffs, and need review points.
+Some tasks are large. They cross boundaries, touch multiple files, and need review points.
 
-The agent should decide the size before it plans the work.
+The agent should classify the task before it plans the work.
 
-If every task gets the same heavy process, the process becomes noise. You ask for one small fix and get a five-part architecture plan. Nobody wants that.
+If every request gets the same heavy process, the process becomes noise. You ask for one small fix and get a strategy document. Nobody in their right mind wants that.
 
 Small tasks should stay small.
 
-This is not about being lazy. It is about matching the workflow to the risk.
+This is not laziness. It is matching process to risk.
 
 ## Review artifacts, not feelings
 
-A critic step can be useful, but only if it checks something concrete.
+A critic step can help, but only if it checks something concrete.
 
-"Review this plan" is too vague.
+"Review this plan" is mush.
 
 Better:
 
@@ -123,9 +123,9 @@ Flag any task that:
 - has no verification step
 ```
 
-Now the critic has a real job.
+Now the critic has a job.
 
-The same idea works after implementation:
+Same thing after implementation:
 
 ```text
 Check this diff against the brief.
@@ -136,7 +136,7 @@ Confirm that:
 - no unrelated files changed
 ```
 
-This is much better than asking the model whether the code is "good".
+That is much better than asking whether the code is "good."
 
 Good according to what?
 
@@ -146,9 +146,9 @@ The brief gives the answer.
 
 Prompts matter. Clear instructions help. Examples help. Good defaults help.
 
-But after a point, adding more prompt is like adding more comments to confusing code. It may explain the mess. It does not fix the structure.
+But after a point, adding more prompt is like adding comments to confusing code. It may explain the mess. It does not fix the structure.
 
-A better agent workflow is usually boring:
+A sane agent workflow is usually boring:
 
 - write a short brief
 - let the human edit it
@@ -156,7 +156,7 @@ A better agent workflow is usually boring:
 - generate a plan only when needed
 - check the plan against the brief
 - check the diff against the plan and brief
-- run tests
+- run the tests
 
 This is not magic. It is normal engineering discipline around a tool that is very good at sounding confident.
 

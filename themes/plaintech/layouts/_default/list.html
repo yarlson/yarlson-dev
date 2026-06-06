@@ -1,7 +1,7 @@
-{{ define "title" }}{{ if .IsHome }}{{ site.Params.author }} — CTO-level engineer and technical founder{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}{{ end }}
+{{ define "title" }}{{ if .IsHome }}{{ site.Title }} | Backend systems, agents, and infrastructure{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}{{ end }}
 {{ define "main" }}
 <section aria-labelledby="list-title">
-  <h1 id="list-title">{{ if .IsHome }}Latest Posts{{ else }}{{ .Title }}{{ end }}</h1>
+  <h1 id="list-title">{{ if .IsHome }}Latest writing{{ else }}{{ .Title }}{{ end }}</h1>
   {{ if .Content }}<div class="prose">{{ .Content }}</div>{{ end }}
   {{ $p := .Paginate .Pages }}
   <ul class="post-list" role="list">

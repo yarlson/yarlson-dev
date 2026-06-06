@@ -1,6 +1,6 @@
 ---
 title: "The CI Pipeline Nobody Owns"
-summary: "Your CI pipeline is building the same Docker image three times per run, a dependency bot just DDoS'd your runner fleet, and nobody's going to fix it — because nobody owns it. How shared pipelines corrode without a single bad decision."
+summary: "Your CI pipeline builds the same Docker image three times, a dependency bot eats your runner fleet, and nobody fixes it because nobody owns the system."
 postLayout: simple
 date: "2026-04-07"
 tags:
@@ -8,76 +8,132 @@ tags:
   - platform
 ---
 
-Your CI pipeline is building the same Docker image three times per run. Backend PRs are triggering the TypeScript compiler. A dependency bot opened 24 pull requests in two hours and ate your entire runner fleet for breakfast. And right now, someone on your team is staring at a "runner unavailable" error, sighing, and clicking re-run.
+Your CI pipeline is building the same Docker image three times per run. Backend PRs trigger the TypeScript compiler. A dependency bot opened 24 pull requests in two hours and ate the runner fleet for breakfast.
 
-Nobody is going to fix this. Not because it's hard. Because nobody owns it.
+Right now, someone on your team is staring at a "runner unavailable" error, sighing, and clicking re-run.
 
-## How a pipeline becomes a disaster without a single bad decision
+Nobody is going to fix this.
 
-Here's how it goes. A monorepo gets GitHub Actions. Someone sets up the initial workflows — a Docker build, some tests, a linting step. It works. Different teams add their own checks. A frontend team adds `tsc`. A backend team adds integration tests. An infra team adds a security scan. Each addition is reasonable. Each addition is reviewed and merged by someone who understands that specific check.
+Not because it is hard.
 
-But nobody is reviewing the pipeline as a system. Nobody is asking: what happens when all of these run together?
+Because nobody owns it.
 
-What happens is this: a single PR triggers 47 minutes of CI. The Docker image gets built in three separate jobs because nobody set up a shared build step. The TypeScript compiler runs on a PR that only changed a Go file. A full-repo lint pass fires on a one-line README fix. And somewhere in the middle of all that, the runner pool runs out of capacity, so half the jobs queue for ten minutes before they even start.
+## How a pipeline corrodes
 
-The pipeline didn't break. It corroded. Slowly, one reasonable addition at a time, until the whole thing was bloated, expensive, and fragile. And the worst part? It still technically works. Green checkmarks eventually appear. PRs eventually merge. So nobody escalates it, because "eventually" feels like "fine."
+Here is how it usually happens.
 
-It's not fine.
+A monorepo gets GitHub Actions. Someone creates the initial workflows: Docker build, tests, lint. It works. Different teams add their checks. Frontend adds `tsc`. Backend adds integration tests. Infra adds a security scan.
 
-## Let's talk about the ownership gap
+Each addition is reasonable. Each one is reviewed by someone who understands that specific check.
 
-The platform team says: "We manage the runners. We don't own the workflows." The feature teams say: "We added our checks. We don't own the infrastructure." Both are correct. Both are describing a hole in the org chart that your CI pipeline fell into.
+Nobody reviews the pipeline as a system.
 
-This isn't a tooling problem. GitHub Actions, CircleCI, Jenkins — it doesn't matter. The gap is structural. CI pipelines sit at the intersection of infrastructure (runners, compute, scaling) and application concerns (what to test, what to lint, what to build). No single team naturally owns both halves. So nobody owns the whole.
+Nobody asks: what happens when all of this runs together?
 
-And the thing about systems that nobody owns? They optimize for addition. It's easy to add a check. It's easy to add a workflow. It's easy to add a bot. Removing things requires understanding the whole system, and understanding the whole system is nobody's job.
+What happens is this: one PR triggers 47 minutes of CI. The Docker image gets built in three jobs because nobody set up a shared build step. TypeScript runs on a PR that changed only Go. Full-repo lint runs on a README fix. The runner pool runs out of capacity, so half the jobs queue before starting.
 
-So what does this actually cost?
+The pipeline did not break. It corroded.
 
-**Money.** Runner costs drift upward by a few thousand dollars a month. Nobody notices because nobody's watching the trend line. Multiply it across a year and you've quietly burned $40K on redundant Docker builds and unscoped linting. What a concept — paying real money for CI checks that test nothing relevant to the PR they're running on.
+One reasonable addition at a time, until the whole thing became slow, expensive, and fragile.
 
-**Time.** A PR takes 25 minutes to pass checks and 8 minutes to deploy after merge. Read that again. The verification phase is three times longer than the deployment phase. Something has gone structurally wrong, and the fix isn't "faster runners." The fix is "stop running things you don't need to run."
+The worst part is that it still technically works. Green checks eventually appear. PRs eventually merge. So nobody escalates it, because "eventually" starts to feel like "fine."
 
-**Trust.** This is the one that actually kills you. When CI is flaky, engineers stop believing it. They re-run failed jobs without reading the error. They merge with amber checks. They build local workarounds to avoid triggering the full pipeline. The CI system becomes background noise — technically present, functionally ignored. And at that point, what are you even paying for?
+It is not fine.
 
-## The dependency bot incident (or: how to DDoS yourself)
+## The ownership gap
 
-I can see the configuration review that approved the dependency update bot. "It'll keep our deps current! Automated PRs! Less toil!" Sure. Great.
+The platform team says: "We manage the runners. We do not own the workflows."
 
-But here's the thing: nobody configured concurrency limits. So the bot opens 24 pull requests in two hours. Each PR triggers the full CI pipeline. That's 24 simultaneous pipeline runs competing for the same runner pool. Every engineer trying to merge real work is now queued behind two dozen automated dependency bumps, waiting for runners that are busy linting a patch version update to a logging library.
+The feature teams say: "We added our checks. We do not own the infrastructure."
 
-This is a self-inflicted denial-of-service attack. The bot did exactly what it was configured to do. The problem wasn't the bot. The problem was that nobody thought about the bot as a participant in a shared system with finite resources.
+Both are correct. Both are describing the hole your CI pipeline fell into.
 
-The fix is boring: set a concurrency limit, batch updates, run them at 2 AM. But "boring" fixes require someone to notice the problem, understand the system well enough to scope the fix, and have the authority to change the bot's configuration. When nobody owns the pipeline, even boring fixes don't happen.
+This is not a tooling problem. GitHub Actions, CircleCI, Jenkins, whatever. The gap is structural. CI sits at the intersection of infrastructure and application logic. Runners, compute, scaling on one side. What to test, lint, and build on the other.
 
-## After-hours scaling, or: the cost of "saving money"
+No single team naturally owns both halves.
 
-Runners scale down after business hours to reduce cloud costs. Reasonable. But engineers work late sometimes. And when they push a commit at 7 PM and their CI job gets picked up by a runner that spins up and immediately dies because the scaling policy is mid-transition — well, that engineer just lost an hour of their evening.
+So nobody owns the whole.
 
-The runner didn't crash. It was terminated by the scaling policy. But the error message says "runner unavailable," which tells the engineer nothing. So they re-run the job. It fails again. They wait. They try again in 20 minutes. Eventually it works. They go home annoyed.
+Systems that nobody owns optimize for addition. It is easy to add a check. Easy to add a workflow. Easy to add a bot. Removing things requires understanding the system, and understanding the system is nobody's job.
 
-This happens twice a week, to different engineers, and nobody connects the dots — because there's no observability on the runners, and there's no owner tracking the pattern.
+So what does this cost?
 
-## What actually fixes this
+**Money.** Runner spend drifts up by a few thousand dollars a month. Nobody notices because nobody watches the trend. Across a year, you quietly burn $40K on redundant Docker builds and unscoped linting.
 
-Look, the fixes aren't technically interesting. That's the point. The pipeline doesn't need a rewrite. It needs attention from someone with the mandate to treat it as a system.
+**Time.** A PR takes 25 minutes to pass checks and 8 minutes to deploy after merge. Verification is three times longer than deployment. The fix is not "faster runners." The fix is "stop running things that do not apply."
 
-**Scope checks to what changed.** Path-based filtering. If the PR only touches Go files, don't run `tsc`. If it only touches docs, don't build Docker images. This is supported natively by every major CI system. Configuring it is an afternoon of work. The savings are permanent. Boring is a superpower.
+**Trust.** This is the one that hurts. When CI is flaky, engineers stop believing it. They re-run failed jobs without reading logs. They merge around amber checks. They build local workarounds to avoid triggering the full pipeline. CI becomes background noise: technically present, functionally ignored.
 
-**Kill the redundant builds.** One Docker build per pipeline run, published to a short-lived tag, consumed by downstream jobs. Not three identical builds because three jobs each have their own `docker build` step. The plumbing takes a day. The payoff is measured in hours of compute saved per week.
+At that point, what are you paying for?
 
-**Rate-limit the bots.** Concurrency limits on automated PRs. Batch dependency updates. Off-peak scheduling. This is fifteen minutes of configuration. The fact that it hasn't been done tells you everything about the ownership gap.
+## The dependency bot incident
 
-**Make the cost visible.** Attribute runner spend to workflows. Put it on a dashboard. The moment a team lead sees that their linting step costs $400/month in compute, they'll scope it themselves. People optimize what they can measure. They ignore what they can't.
+I can picture the review that approved the dependency update bot.
 
-**Give someone the job.** Not a permanent "CI team." One engineer, one quarter, with the mandate to audit, measure, and fix. That's all it takes to break the "nobody owns it, so we all suffer" loop. The pipeline doesn't need a team. It needs an owner.
+"It'll keep our deps current. Automated PRs. Less toil."
+
+Sure. Good idea.
+
+Except nobody configured concurrency limits.
+
+So the bot opens 24 pull requests in two hours. Each PR triggers the full CI pipeline. Twenty-four simultaneous runs compete for the same runner pool. Engineers trying to merge real work now sit behind automated patch bumps to logging libraries.
+
+That is a self-inflicted denial-of-service attack.
+
+The bot did exactly what it was configured to do. The problem was not the bot. The problem was nobody treated it as a participant in a shared system with finite resources.
+
+The fix is boring: set concurrency limits, batch updates, run them off-peak.
+
+But boring fixes still require an owner. Someone has to notice the problem, understand the pipeline, and have authority to change the config.
+
+When nobody owns the pipeline, even boring fixes do not happen.
+
+## The cost of "saving money"
+
+Runners scale down after business hours to save cloud spend. Reasonable.
+
+Engineers also work late sometimes. When one pushes at 7 PM and a job lands on a runner that starts and immediately dies because the scaling policy is mid-transition, that engineer loses an hour.
+
+The runner did not "flake." It was terminated by policy. But the error says "runner unavailable," which tells the engineer nothing useful.
+
+So they re-run. It fails again. They wait. They try in 20 minutes. Eventually it passes. They go home annoyed.
+
+This happens twice a week to different people, and nobody connects the dots because there is no runner observability and no owner tracking the pattern.
+
+## What actually fixes it
+
+The fixes are not technically interesting. That is the point. The pipeline does not need a grand rewrite. It needs attention from someone with the mandate to treat it as a system.
+
+**Scope checks to what changed.** Path-based filtering. If the PR only touches Go, do not run `tsc`. If it only touches docs, do not build Docker images. Every major CI system supports this. Configuring it is an afternoon. The savings are permanent.
+
+**Kill redundant builds.** Build the Docker image once per pipeline run, publish it to a short-lived tag, and let downstream jobs consume it. Not three identical `docker build` steps because three jobs each live in their own little world.
+
+**Rate-limit bots.** Concurrency limits, batching, off-peak schedules. Fifteen minutes of configuration. The fact that it is not already done tells you everything about ownership.
+
+**Make cost visible.** Attribute runner spend to workflows. Put it on a dashboard. The moment a team lead sees their lint step costs $400/month, they will scope it themselves. People optimize what they can see.
+
+**Give someone the job.** Not a permanent CI department. One engineer, one quarter, with a mandate to audit, measure, and fix. That is enough to break the "nobody owns it, so everyone suffers" loop.
+
+The pipeline does not need a team.
+
+It needs an owner.
 
 ## The system nobody admits they built
 
-So here's where we are. You've got a CI pipeline that was never designed — it was accumulated. Each piece was reasonable in isolation. The whole thing is slow, expensive, flaky, and unowned. The fixes are straightforward. The organizational will to apply them is not.
+Your CI pipeline was not designed. It accumulated.
 
-CI pipelines are infrastructure that masquerades as configuration. They feel like YAML files that each team manages independently. But they behave like shared distributed systems with finite resources, cross-team dependencies, and real operational costs. The moment one team's bot can starve another team's runners, you don't have a collection of independent workflows. You have a system. And systems without owners don't degrade gracefully — they corrode quietly until someone finally asks why the cloud bill went up $40K and the answer is "nobody was looking."
+Each piece was reasonable alone. Together, the system is slow, expensive, flaky, and unowned. The fixes are straightforward. The organizational will is the hard part.
 
-The engineering is easy. The hard part is someone saying: this is real infrastructure, it needs a real owner, and that work counts.
+CI pipelines are infrastructure pretending to be YAML. They feel like config each team can manage independently. They behave like shared distributed systems with finite resources, cross-team dependencies, and real operating costs.
 
-If you've been silently re-running failed CI jobs and shrugging — you're not alone. But the shrug is the problem.
+The moment one team's bot can starve another team's runners, you do not have independent workflows. You have a system.
+
+Systems without owners do not degrade gracefully. They corrode quietly until someone asks why the cloud bill went up $40K and the answer is "nobody was looking."
+
+The engineering is easy.
+
+The hard part is someone saying: this is real infrastructure, it needs a real owner, and that work counts.
+
+If you have been silently re-running failed CI jobs and shrugging, you are not alone.
+
+But the shrug is the problem.

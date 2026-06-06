@@ -1,7 +1,7 @@
-{{ define "title" }}Tags | {{ site.Title }}{{ end }}
+{{ define "title" }}Topics | {{ site.Title }}{{ end }}
 {{ define "main" }}
 <section aria-labelledby="tags-title">
-  <h1 id="tags-title">Tags</h1>
+  <h1 id="tags-title">Topics</h1>
   {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
   <ul class="post-list" role="list">
     {{ $tagPages := where .Site.RegularPages "Section" "tags" }}

@@ -1,6 +1,6 @@
 ---
 name: Music
-description: Notes on music, listening habits, and software around audio workflows
+description: "Music, listening habits, and the software that quietly shapes both"
 ---
 
-Writing about music, listening habits, and the software that shapes how we discover, organize, and experience audio.
+Music, listening habits, and the software that shapes how we discover, organize, and experience audio.

@@ -1,6 +1,6 @@
 ---
 title: "Preview Environments Are Easy to Want and Hard to Operate"
-summary: "The pitch is irresistible — per-PR environments, live links, instant feedback. Then someone needs twenty restarts to get a multi-service stack running, and the pitch meets operational reality."
+summary: "The pitch is obvious: per-PR environments, live links, faster feedback. Then a multi-service stack needs twenty restarts and the pitch meets operations."
 postLayout: simple
 date: "2026-04-07"
 tags:
@@ -8,88 +8,130 @@ tags:
   - docker
 ---
 
-The pitch is irresistible. You open a pull request, and within minutes, a fully running instance of your application spins up — just for that PR. Reviewers click a link, see the change live, and give feedback on the real thing instead of screenshots. QA doesn't wait for a staging deploy. Frontend and backend engineers validate integration without coordinating. It's clean, it's fast, it's the future.
+The pitch is irresistible.
 
-And then someone actually has to operate it.
+Open a pull request and, within minutes, a running instance of your application appears just for that PR. Reviewers click a link and see the change live. QA does not wait for staging. Frontend and backend engineers validate integration without coordinating in Slack for half a day.
+
+Clean. Fast. Obvious.
+
+Then someone has to operate it.
 
 ## The demo vs. the twentieth deploy
 
-The first time you show a preview environment to your team, it works beautifully. You set it up carefully, verified every component, tested the happy path, and hit the demo with confidence. People are impressed. Someone says "this changes everything."
+The first preview environment demo usually works beautifully. You set it up carefully. You verified the happy path. You know exactly which button to click. People are impressed. Someone says "this changes everything."
 
-The twentieth time a random engineer on another team creates one from a feature branch, it doesn't start. A service crashes on init. A queue connection times out. The environment comes up in a half-broken state where the frontend loads but every API call returns a 502. The engineer restarts it. Same thing. They restart it again. This time a different service fails.
+The twentieth time a random engineer creates one from a feature branch, it does not start.
 
-One team reported needing roughly twenty restarts to get a multi-service preview environment fully operational. Not because the tooling was broken — each individual component eventually started — but because the system had enough moving parts that some combination of startup timing, resource pressure, and initialization order would fail on any given attempt.
+A service crashes during init. A queue connection times out. The frontend loads, but every API call returns a 502. The engineer restarts it. Same result. They restart again. This time a different service fails.
+
+One team reported needing roughly twenty restarts to get a multi-service preview environment fully operational. Not because every component was broken. Each component could start eventually. The system just had enough moving parts that startup timing, resource pressure, and initialization order kept producing some new failure.
 
 Twenty restarts. For a developer productivity tool.
 
-That's the gap between "preview environments" the concept and preview environments the operational reality. And it's a gap that the blog posts and vendor pitches never mention, because the hard part isn't creating environments. It's keeping them reliable at scale, across teams, over time.
+That is the gap between preview environments as a concept and preview environments as an operating environment. Vendor pitches usually skip that part because creating environments is not the hard bit.
 
-## Let's talk about config divergence
+Keeping them reliable is.
 
-Preview environments run on different infrastructure than production. Maybe it's a lightweight Kubernetes distribution instead of a full cluster. Maybe it's a smaller instance type, a different region, a simplified networking setup. These are reasonable cost optimizations. They're also a trap.
+## Config divergence is where the lies start
 
-Here's what happens: a service works fine in production. It works fine in your full staging environment. It does not work in the preview environment, because the preview infrastructure requires an environment variable that production doesn't need. Specifically, a message queue config flag that's set implicitly by the production Kubernetes setup but must be set explicitly on the lightweight alternative.
+Preview environments rarely run on identical infrastructure to production. Maybe they use a lightweight Kubernetes distribution. Maybe smaller instances. Maybe a cheaper region. Maybe simplified networking.
 
-Nobody documented this. Nobody could have predicted it. It's an emergent property of running the same application on different infrastructure. And discovering it cost someone an entire day of debugging — SSH into the container, read raw logs, compare configs line by line, find the one missing variable, add it, restart, verify.
+Those are reasonable cost choices.
 
-Multiply this by every service in your stack, and you start to see the pattern. Config divergence isn't a bug you fix once. It's a category of ongoing friction. Every infrastructure difference between preview and production is a potential false positive ("it fails here but works in prod") or false negative ("it works here but fails in prod"). You can minimize the divergence, but you can't eliminate it. And each instance you discover feels like it should have been the last one. It never is.
+They are also traps.
 
-## The proxy problem, or: quick fixes that become permanent
+A service works in production. It works in staging. It fails in preview because the preview infrastructure requires an environment variable production gets implicitly from Kubernetes. A message queue config flag, for example, that is automatic in one setup and manual in the other.
 
-Preview environments need routing. A frontend needs to talk to a backend. A reverse proxy needs to know which containers are alive and where to send traffic. Simple enough — until a container restarts.
+Nobody documented it. Nobody predicted it. It is just what happens when the same app runs on different infrastructure.
 
-The container gets a new IP. The proxy still has the old one cached. Requests fail. Not with a clear error, mind you — with a connection timeout or a cryptic 502 that tells you nothing about root cause.
+Discovering it costs a day: SSH into the container, read raw logs, compare configs, find the missing variable, add it, restart, verify.
 
-The fix? Restart the proxy on every deploy. Blunt, ugly, effective. The "real" fix involves proper service discovery, health-check-driven routing, and graceful connection draining. That's a genuine infrastructure project — weeks of work, careful testing, potential blast radius.
+Multiply that by every service and the pattern gets clear. Config divergence is not a bug you fix once. It is a category of friction. Every infrastructure difference between preview and production is a potential false positive or false negative.
 
-So the quick fix stays. It becomes part of the deployment config. Six months later, someone looks at the config file and sees a proxy restart baked into every deploy step and asks "why?" The answer is: because the proper fix was always "next quarter," and next quarter never came.
+"It fails here but works in prod."
 
-This pattern — quick fix now, proper fix later, quick fix becomes permanent — is not unique to preview environments. But preview environments are uniquely prone to it, because they sit in the gap between "production-grade" and "good enough for dev." Nothing ever gets the full production treatment, so everything accumulates workarounds.
+"It works here but fails in prod."
 
-## The lifecycle trap
+You can reduce the divergence. You usually cannot eliminate it. And every time you find one, it feels like surely this was the last one.
 
-Preview environments are supposed to be ephemeral. But "ephemeral" is a policy decision, and every policy has edge cases that will make you question your choices.
+It never is.
 
-Auto-shutdown after a timeout? Great for saving resources. Terrible for the engineer who steps away for lunch and comes back to a dead environment. Manual cleanup? Saves nothing, because nobody ever remembers to delete their environment. PR-merge-triggered shutdown? Reasonable — until someone's testing a draft PR that won't be merged for a week.
+## Quick fixes become permanent
 
-And here's the real kicker: the moment preview environments are useful enough that someone depends on them — truly depends on them for daily testing — they'll ask for persistence. "Can you make mine not auto-shutdown?" The request is completely reasonable. It's also the beginning of the end of "ephemeral."
+Preview environments need routing. Frontend to backend. Proxy to containers. Requests to the right branch-specific environment.
 
-You'll say yes, because the requester has a legitimate use case. Then another team will ask. Then another. And now you're operating a fleet of "ephemeral" environments, some of which have been running for three weeks, consuming resources, drifting from their source branches, and nobody remembers which ones are still needed.
+Simple enough until a container restarts.
 
-What a revolutionary concept: infrastructure that's defined as temporary becomes permanent the moment it's useful.
+The container gets a new IP. The proxy still has the old one cached. Requests fail with a timeout or a vague 502 that tells you nothing useful.
 
-## Cross-service stacks: where complexity goes exponential
+The quick fix: restart the proxy on every deploy.
 
-The real unlock — the thing that makes preview environments genuinely transformative rather than merely convenient — is multi-service stacks. Not just "your API in isolation," but the API, the worker, the frontend, and the message queue, all from the same set of PRs, all pointed at each other, all running together.
+Blunt. Ugly. Effective.
 
-This is also where things get genuinely hard.
+The proper fix is service discovery, health-check-driven routing, and graceful connection draining. That is real infrastructure work: weeks of implementation, careful testing, blast radius.
 
-Each service has its own build, its own startup sequence, its own health checks, its own configuration. Linking them into a coordinated stack means resolving version dependencies across services. Startup ordering matters — the worker can't start before the queue is ready, and the frontend can't start before the API is healthy. A health check that works for a single-service environment might not account for cross-service dependencies.
+So the quick fix stays. It becomes part of the deploy config. Six months later, someone sees "restart proxy" baked into every deploy and asks why. The answer is: because the proper fix was always next quarter, and next quarter never arrived.
 
-The first external tester of any multi-service stack feature will find bugs within hours. Not because the feature is poorly built, but because the combinatorial surface of "N services, each with independent state and startup behavior, coordinated into a single environment" is large enough that the happy path is one of hundreds of paths. You tested the happy path. They found path number 47.
+This happens everywhere, but preview environments are especially good at collecting these compromises. They sit between production-grade and "good enough for dev." Nothing gets full production treatment, so everything collects workarounds.
 
-I can see the planning meeting: "How hard can it be to link four services together?" Famous last words. The linking is easy. The reliability is the mountain.
+## Ephemeral is a policy, not a property
 
-## So what actually works?
+Preview environments are supposed to be temporary.
 
-Teams that operate preview environments successfully long-term share a few traits — and none of them are "chose the right tool."
+But temporary is a policy decision, and policy always has edge cases.
 
-**They invest more in debugging than in creation.** Spinning up an environment is table stakes. Diagnosing why one is broken — without SSH access, without reading raw container logs, without spending half a day on it — is what determines whether the tool gets adopted or abandoned. The teams that survive build diagnostic scripts, structured health checks, and runbooks for common failure modes. The teams that don't survive build a beautiful creation flow and then wonder why nobody uses it after month two.
+Auto-shutdown after a timeout? Good for cost. Bad for the engineer who goes to lunch and comes back to a dead environment. Manual cleanup? Saves nothing, because nobody remembers. Shutdown on PR merge? Reasonable until someone tests a draft PR for a week.
 
-**They accept that reliability is ongoing operational work.** Preview environments aren't a feature you ship. They're an operating environment you maintain. New services get added. Infrastructure changes. Dependencies shift. The preview setup needs to track all of it, continuously, forever. The teams that treat launch day as the finish line are in for a surprise.
+And the moment preview environments become useful enough for daily testing, someone asks for persistence.
 
-**They keep the scope honest.** Not everything needs to run in a preview environment. Third-party OAuth? Contract test it. Payment processing? Stub it. External webhooks? Mock them. Trying to faithfully reproduce every integration in an ephemeral environment leads to an environment that is neither ephemeral nor reliable. Restraint is a superpower.
+"Can you make mine not auto-shutdown?"
 
-**They treat config parity like a first-class engineering concern.** Every environment variable, every feature flag, every infrastructure assumption that differs between preview and production is a potential lie — a test that passes where it shouldn't, or fails where it needn't. The teams that win maintain a single source of configuration truth and flag divergences automatically, before an engineer wastes half a day discovering one manually.
+The request is reasonable. It is also the beginning of the end of ephemeral.
 
-## The question nobody asks at the planning meeting
+You say yes because the use case is real. Then another team asks. Then another. Now you operate a fleet of "temporary" environments, some running for three weeks, consuming resources, drifting from their branches, and nobody remembers which ones still matter.
 
-The question isn't "should we build preview environments?" For most engineering orgs past a certain size, the answer is obviously yes. The value is real. The pitch is true.
+Infrastructure defined as temporary becomes permanent the moment it is useful. Weird how that works.
 
-But here's the thing. The pitch describes the creation experience. It describes clicking a link and seeing your PR live. It does not describe the 3 AM debugging session when the proxy is routing to a dead container. It does not describe the three-week investigation to get a third-party integration working on lightweight infrastructure. It does not describe the twenty restarts. It does not describe the configuration divergence, the lifecycle policy fights, the scope creep, the workarounds that become permanent.
+## Multi-service stacks are where it gets real
 
-The real question is: are you willing to operate these things? Not build them. Operate them. Debug them when they break. Maintain them as the system evolves. Invest in the unglamorous tooling that keeps them reliable.
+The real unlock is multi-service preview environments. Not just your API in isolation, but the API, worker, frontend, queue, and related services from the same set of PRs, all pointed at each other.
 
-If yes — preview environments are one of the most impactful developer experience investments you can make. Genuinely transformative.
+That is also where complexity stops being polite.
 
-If "we'll build it and it'll just work" — well. Good luck with that.
+Each service has its own build, startup sequence, health checks, and config. Linking them into one stack means resolving version dependencies across services. Startup order matters. The worker cannot start before the queue is ready. The frontend cannot be healthy before the API is healthy. A health check that works for one service may say nothing about the whole stack.
+
+The first external tester of a multi-service stack will find bugs within hours. Not because the feature is bad, but because the surface area is huge. N services, each with independent state and startup behavior, coordinated into one environment. You tested the happy path. They found path 47.
+
+"How hard can it be to link four services together?"
+
+Famous last words. The linking is easy. Reliability is the mountain.
+
+## What actually works
+
+Teams that run preview environments successfully have a few habits. None of them are "picked the magic tool."
+
+**They invest more in debugging than creation.** Spinning up an environment is table stakes. Diagnosing why one is broken, without SSH spelunking and half a day of log archaeology, is what decides whether people keep using it. The teams that survive build diagnostics, structured health checks, and runbooks. The teams that do not build a beautiful creation flow and wonder why adoption dies in month two.
+
+**They accept that reliability is ongoing work.** Preview environments are not a feature you ship and forget. They are an operating environment. New services arrive. Infra changes. Dependencies shift. The preview setup has to track all of it, forever.
+
+**They keep scope honest.** Not everything belongs in a preview environment. Third-party OAuth? Contract test it. Payment processing? Stub it. External webhooks? Mock them. Reproducing every external integration turns "ephemeral" into "production, but worse."
+
+**They treat config parity as engineering work.** Every environment variable, feature flag, and infrastructure assumption that differs from production is a possible lie. The winning teams keep a single source of truth and flag divergence automatically, before an engineer loses an afternoon finding it by hand.
+
+## The question nobody asks early enough
+
+The question is not "should we build preview environments?" For many engineering orgs, yes. The value is real.
+
+The better question is: are we willing to operate them?
+
+Not build them. Operate them.
+
+Debug them when they break. Maintain them as the system changes. Invest in the boring tools that make them reliable. Own the lifecycle policy. Keep config honest. Retire the workarounds instead of letting them become folklore.
+
+The pitch describes the creation experience: click a link, see your PR live.
+
+It does not describe the proxy routing to a dead container. It does not describe the three-week investigation into a third-party integration on lightweight infrastructure. It does not describe the twenty restarts.
+
+If you are willing to operate them, preview environments can be one of the best developer experience investments you make.
+
+If the plan is "we'll build it and it'll just work," good luck with that.

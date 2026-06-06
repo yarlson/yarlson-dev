@@ -1,6 +1,6 @@
 ---
 name: Go
-description: A statically typed, compiled programming language designed at Google
+description: "Go code, CLIs, libraries, compilers, and the restraint that makes the language useful"
 ---
 
-Go code — CLIs, libraries, compilers, and the naming conventions that hold it all together. Opinionated takes on a language that rewards restraint.
+Go code: CLIs, libraries, compilers, and the naming conventions that hold it together. Opinionated notes on a language that rewards restraint.

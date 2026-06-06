@@ -1,6 +1,6 @@
 ---
 title: "Building an IDE Plugin the Same Week You Build the Language"
-summary: "Most languages ship tooling years after the compiler. I built the Yar IntelliJ plugin in parallel with the compiler itself — 19 commits tracking language changes in real time. Here's why DX-first language development changes how you think about design."
+summary: "Most languages add tooling years after the compiler. I built the Yar IntelliJ plugin while the compiler was still changing, and that changed the language design."
 postLayout: simple
 date: "2026-04-05"
 tags:
@@ -8,83 +8,167 @@ tags:
   - compilers
 ---
 
-Here's a pattern so common it's practically a law: someone builds a programming language, publishes a compiler, writes documentation, maybe attracts a few users — and then, two years later, starts thinking about editor support. By that point, the language has corners that are genuinely hostile to tooling. Syntax that's ambiguous without full type resolution. Scoping rules that require running half the compiler to answer "where is this symbol defined?" Constructs that a grammar can parse but a plugin can't highlight without semantic context.
+There is a common language-building pattern: build the compiler, publish it, write some docs, maybe get a few users, then think about editor support two years later.
 
-I didn't want to be two years late. So when I started adding major features to [Yar](https://github.com/yarlson/yar) — methods, generics, closures, interfaces, garbage collection, a package manager, structured concurrency — I built the [IntelliJ plugin](https://github.com/yarlson/yar-plugin) at the same time. Not "later that month." Not "once the language stabilized." The same week. Sometimes the same day. Nineteen commits to the plugin in seven days, tracking a compiler that was changing under it in real time.
+By then, the language has usually grown tooling-hostile corners. Syntax that is ambiguous without type resolution. Scoping rules that require half the compiler to answer "where is this symbol defined?" Constructs the grammar can parse, but a plugin cannot highlight without semantic context.
 
-And that constraint — keeping tooling in lockstep with design — changed how I thought about the language itself.
+I did not want to be two years late.
 
-## Why IntelliJ, and Why From Scratch
+So while I was adding major features to [Yar](https://github.com/yarlson/yar), methods, generics, closures, interfaces, garbage collection, a package manager, structured concurrency, I built the [IntelliJ plugin](https://github.com/yarlson/yar-plugin) at the same time.
 
-JetBrains provides a tool called [Grammar-Kit](https://github.com/JetBrains/Grammar-Kit) — a plugin for IntelliJ that generates parsers and PSI (Program Structure Interface) classes from BNF grammars. You write a BNF grammar, a JFlex lexer specification, and Grammar-Kit generates the parser and PSI tree infrastructure — JetBrains' version of an AST that powers everything from highlighting to navigation to refactoring.
+Not later that month. Not once the language stabilized. Same week. Sometimes the same day.
 
-The alternative is LSP — the Language Server Protocol that VS Code popularized. LSP is genuinely capable: semantic tokens, document symbols, hover documentation, completion, diagnostics, go-to-definition — it covers a lot of ground. But JetBrains' PSI model goes deeper. Incremental reparsing that updates the tree in-place as you type. Fine-grained PSI-level code transformations for refactoring. Direct access to the file's token stream for formatting. The ability to build rich, stateful inspections that walk the tree with full context. LSP communicates through a request-response protocol between processes; PSI gives you the tree itself, in-process, mutable. For a language where I control both ends — compiler and plugin — that deeper integration wins.
+Nineteen plugin commits in seven days, tracking a compiler that was changing under it in real time.
 
-The BNF grammar for Yar started simple. Function declarations, struct types, basic expressions. The JFlex lexer tokenized keywords, operators, string literals. Within a few hours, the plugin could highlight Yar files with real syntax coloring, match braces, and fold code blocks.
+That constraint changed how I thought about the language itself.
 
-But here's the thing about a BNF grammar for a plugin: it's not the same grammar as the compiler's parser. The compiler's parser can reject invalid programs. The plugin's parser has to handle them gracefully — half-typed expressions, missing semicolons, incomplete struct literals. Every construct needs error recovery rules so the PSI tree stays navigable even when the code is broken. You're not parsing valid Yar. You're parsing Yar-shaped text that a human is currently editing.
+## Why IntelliJ, and why from scratch
 
-## The Synchronization Problem
+JetBrains has [Grammar-Kit](https://github.com/JetBrains/Grammar-Kit), a plugin that generates parsers and PSI classes from BNF grammars. You write a BNF grammar and a JFlex lexer, and Grammar-Kit generates the parser plus the PSI tree infrastructure.
 
-The real challenge wasn't building the plugin. It was keeping it alive while the language changed daily.
+PSI is JetBrains' AST-ish model that powers highlighting, navigation, refactoring, formatting, and inspections.
 
-On March 29th, Yar gained methods on struct types. The plugin grammar needed receiver syntax in function declarations. Same day: generics landed. The grammar needed type parameter lists, explicit type arguments at call sites, and generic struct definitions. Same day: closures. Anonymous function literals, capture lists, function types as first-class values. Same day: interfaces. Named interface declarations with method sets.
+The obvious alternative is LSP, the Language Server Protocol popularized by VS Code. LSP is capable: semantic tokens, document symbols, hover docs, completion, diagnostics, go-to-definition.
 
-Each of these features changed the grammar, the lexer, the highlighting rules, the completion provider, and the reference resolution logic. In a traditional language development timeline, you'd batch these changes and update tooling once things settled. But things weren't going to settle. The language was moving at the speed of ideas, and the plugin had to move with it.
+But JetBrains PSI goes deeper. Incremental reparsing updates the tree as you type. Refactoring can transform fine-grained PSI elements. Formatting can inspect the file's token stream directly. Inspections can walk a rich in-process tree instead of asking another process for answers over a protocol.
 
-The discipline this forced was simple: every time I added a language feature to the compiler, I immediately asked "can the plugin parse this? Can it highlight this? Can it navigate to the definition?" If the answer was no, the feature wasn't done. The compiler PR and the plugin PR were parts of the same unit of work.
+For a language where I control both ends, compiler and plugin, that deeper integration wins.
 
-This caught design problems early. When I implemented generics with explicit type arguments — `Box[i32]{value: 42}` — the plugin grammar had to distinguish between a generic type instantiation and an index expression. In the compiler, this was easy because the parser had full context. In the plugin's incremental parser, it was ambiguous. The resolution was to use PSI-level lookahead that checked whether the bracket expression was followed by a struct literal. Not elegant. But it worked, and the fact that I discovered the ambiguity while building the plugin — rather than two years later when someone tried to write an LSP — meant I could still change the syntax if needed.
+The Yar grammar started simple: function declarations, struct types, basic expressions. The JFlex lexer tokenized keywords, operators, string literals. Within a few hours, the plugin could highlight Yar files, match braces, and fold code blocks.
 
-## PSI: The Surprisingly Deep Abstraction
+But a plugin grammar is not the same as the compiler grammar.
 
-JetBrains' PSI tree is more than an AST. Every element in the tree — every keyword, every identifier, every whitespace token — is a node. Elements have parents, children, siblings. They implement interfaces like `PsiNamedElement` (for things with names) and `PsiReference` (for things that point to other things). The framework uses these interfaces to power features with surprisingly little glue: if your struct declaration implements `PsiNamedElement` with a working `setName()` method, and your references implement `handleElementRename()`, the rename refactoring works across the project. If your identifier reference implements `PsiReference` with a `resolve()` method, go-to-definition works.
+The compiler can reject invalid programs. The plugin has to survive them: half-typed expressions, missing semicolons, incomplete struct literals. Every construct needs error recovery so the PSI tree stays navigable while a human is still typing.
 
-The reference resolution was the most interesting part. When you write `myStruct.field` in Yar, the plugin needs to:
+You are not parsing valid Yar.
+
+You are parsing Yar-shaped text in the middle of becoming valid.
+
+## The synchronization problem
+
+Building the plugin was not the hard part. Keeping it alive while the language changed daily was.
+
+On March 29th, Yar gained methods on struct types. The plugin grammar needed receiver syntax in function declarations.
+
+Same day: generics. Type parameter lists, explicit type arguments at call sites, generic struct definitions.
+
+Same day: closures. Anonymous function literals, capture lists, function types as first-class values.
+
+Same day: interfaces. Named interface declarations with method sets.
+
+Each feature touched the grammar, lexer, highlighting rules, completion provider, and reference resolution.
+
+In a traditional timeline, you would batch that work and update tooling once the language settled. But the language was moving at the speed of ideas, and the plugin had to move with it.
+
+The discipline was simple: every time I added a compiler feature, I asked:
+
+- Can the plugin parse this?
+- Can it highlight this?
+- Can it navigate to the definition?
+
+If the answer was no, the feature was not done.
+
+The compiler PR and plugin PR were parts of the same unit of work.
+
+That caught design problems early. When I implemented generics with explicit type arguments, `Box[i32]{value: 42}`, the plugin grammar had to distinguish a generic type instantiation from an index expression. In the compiler, this was easy because the parser had more context. In the plugin's incremental parser, it was ambiguous.
+
+The workaround was PSI-level lookahead that checked whether the bracket expression was followed by a struct literal. Not elegant. But it worked. More importantly, I found the ambiguity while I could still change the language if I needed to, not two years later when someone filed an LSP bug.
+
+## PSI is deeper than it looks
+
+JetBrains' PSI tree is more than an AST.
+
+Every element in the tree, every keyword, identifier, and whitespace token, is a node. Elements have parents, children, siblings. They implement interfaces like `PsiNamedElement` for things with names and `PsiReference` for things that point somewhere.
+
+The framework uses those interfaces to power features with surprisingly little glue. If a struct declaration implements `PsiNamedElement` with a working `setName()`, and references implement `handleElementRename()`, rename refactoring works across the project. If an identifier reference implements `PsiReference` with a `resolve()` method, go-to-definition works.
+
+Reference resolution was the interesting part. When you write `myStruct.field`, the plugin has to:
 
 1. Resolve `myStruct` to its declaration
 2. Find the type of that declaration
 3. Look up `field` in that type's members
 4. Return the PSI element for the field declaration
 
-For local variables, this is straightforward — walk up the PSI tree until you find a declaration with the matching name. For imported symbols, it requires reading other files. For struct literals with named fields, it requires matching the field name against the struct definition. For qualified names like `strings.contains`, it requires resolving the package import first, then finding the symbol within that package.
+For locals, that is straightforward: walk up the PSI tree until you find a matching declaration. For imports, it requires reading other files. For struct literals with named fields, it requires matching the field name against the struct definition. For qualified names like `strings.contains`, it requires resolving the package import, then finding the symbol inside that package.
 
-Cross-package reference resolution — where `go-to-definition` on `strings.contains` navigates you to the `contains` function in the `strings` package — was sixteen commits into the plugin. Getting it right required building a package index that mirrored the compiler's import resolution, but operated on PSI trees instead of the compiler's AST. Two parsers, two trees, two resolution systems, arriving at the same answer by different paths. Redundant? Yes. Necessary? Also yes. The compiler and the editor solve different problems with the same grammar.
+Cross-package reference resolution, where go-to-definition on `strings.contains` navigates to the `contains` function in the `strings` package, landed sixteen commits into the plugin.
 
-## Completion: More Than Keywords
+Getting it right meant building a package index that mirrored the compiler's import resolution, but on PSI trees instead of the compiler AST.
 
-Code completion in a plugin has three layers, and most language plugins only implement the first one.
+Two parsers. Two trees. Two resolution systems. Same answer by different paths.
 
-Layer one: keywords. When you type `fn`, suggest `fn`. When you're inside a match block, suggest `case`. This is trivial — a static list filtered by context. Every plugin ships this.
+Redundant? Yes.
 
-Layer two: symbols. When you type a dot after a variable, suggest its fields and methods. When you start an import path, suggest available packages. This requires the PSI reference resolution from above — you need to know what type a variable has to suggest its members.
+Necessary? Also yes. The compiler and editor solve different problems with the same language.
 
-Layer three: semantic awareness. When you're inside a `taskgroup` block, suggest `spawn`. When you're calling a generic function, suggest type arguments based on the expected types. When you're writing a channel operation, suggest `chan_send`, `chan_recv`, `chan_close` with their signatures. This requires understanding not just what names exist, but what names make sense in the current context.
+## Completion is more than keywords
 
-The Yar plugin implements all three. The stdlib packages — `strings`, `fs`, `net`, `testing` — each have completion entries with documentation that appears on hover. Builtins like `append`, `len`, `to_str`, and the channel operations have their signatures and behavior documented inline. When structured concurrency landed on April 1st, the plugin was updated the same day to complete `taskgroup`, `spawn`, `chan[T]`, and the channel builtins with full documentation.
+Code completion has three layers.
 
-Is it perfect? No. The type inference for suggesting struct fields after a dot is fragile — it works for direct declarations but struggles with complex expressions. The completion for generic type arguments is keyword-based rather than genuinely type-aware. But it works for the 90% case, and the 90% case is what makes a plugin feel responsive rather than decorative.
+Layer one: keywords. Type `fn`, suggest `fn`. Inside a match block, suggest `case`. Static list, filtered by context. Every plugin ships this.
 
-## The External Annotator: Bridging Plugin and Compiler
+Layer two: symbols. Type a dot after a variable, suggest fields and methods. Start an import path, suggest packages. This requires PSI reference resolution because the plugin has to know what type a variable has.
 
-The most pragmatic decision in the entire plugin was the external annotator. Rather than reimplementing Yar's type checker in Kotlin (which would be a second compiler maintained in a second language — genuinely terrible idea), the plugin shells out to the actual `yar` binary.
+Layer three: semantic awareness. Inside a `taskgroup`, suggest `spawn`. Calling a generic function, suggest type arguments. Writing channel code, suggest `chan_send`, `chan_recv`, `chan_close` with signatures. This requires knowing not just which names exist, but which names make sense here.
 
-IntelliJ's `ExternalAnnotator` API runs as part of the IDE's background analysis pipeline — when you edit a file, the daemon eventually re-analyzes it, and the annotator fires `yar check` against the project directory. It captures the diagnostic output, parses the `file:line:col: message` format, and maps errors back to source locations in the editor. Red squiggles appear on the line where the compiler found the error. The error message is the compiler's error message, not a plugin approximation.
+The Yar plugin implements all three.
 
-This means the plugin's error reporting is always exactly as accurate as the compiler. It also means it's exactly as slow — a full check on every analysis pass. For a language with fast compilation (Yar checks most programs in under a second), this is fine. For a language with slow compilation, it would be unusable. The design leans on a property of the compiler that isn't guaranteed, and that's a conscious bet.
+The stdlib packages, `strings`, `fs`, `net`, `testing`, have completion entries with hover docs. Builtins like `append`, `len`, `to_str`, and the channel operations have signatures and behavior documented inline. When structured concurrency landed on April 1st, the plugin was updated the same day to complete `taskgroup`, `spawn`, `chan[T]`, and the channel builtins.
 
-The plugin detects the `yar` binary through `PATH` and verifies it exists before enabling the annotator. No binary, no squiggles. The feature degrades gracefully rather than crashing — which, in the JetBrains plugin ecosystem, is not the default behavior. I've seen plugins that assume their external tool exists and throw `NullPointerException` on every keystroke when it doesn't.
+Is it perfect? No.
 
-## What DX-First Language Design Teaches You
+Type inference for fields after a dot is fragile. It works for direct declarations and struggles with complex expressions. Generic type argument completion is keyword-based, not genuinely type-aware.
 
-Building the plugin alongside the language created a feedback loop that pure compiler development doesn't have. When a language feature was hard to support in the plugin, it was usually because the syntax was ambiguous or the scoping rules were unclear. Those are problems that affect every tool that processes the language — formatters, linters, documentation generators, not just IDE plugins.
+But it works for the 90% case, and the 90% case is what makes a plugin feel useful instead of decorative.
 
-Generic type arguments being explicit (`first[str](names)` instead of `first(names)` with inference) made plugin completion dramatically simpler. The plugin doesn't need to run type inference to show you what types a generic function was instantiated with — the source code already says. That's an ergonomic tradeoff in the language that pays dividends in every tool that reads the code.
+## The external annotator was the sane compromise
 
-Structured concurrency with `taskgroup` blocks instead of free-floating `spawn` statements meant the plugin could fold taskgroup blocks and show their structure. If `spawn` could appear anywhere (like `go` in Go), the plugin would have no structural clue about concurrency boundaries. The language design made the tooling better. The tooling requirement made the language design better.
+The most pragmatic decision in the plugin was the external annotator.
 
-Most languages discover these relationships years after shipping, when someone tries to build an LSP and reports fifty syntax ambiguities that the compiler's parser resolved through heuristics nobody documented. Building both at the same time means you discover them while you can still fix them. The cost is higher upfront effort. The payoff is a language that's genuinely toolable from day one.
+I did not want to reimplement Yar's type checker in Kotlin. That would be a second compiler, maintained in a second language, with its own bugs. Absolutely not.
 
-Nineteen commits in seven days. Syntax highlighting, navigation, completion, documentation, formatting, error reporting, and cross-package resolution. Not because the plugin is finished — it isn't — but because the foundation is solid enough that every future language feature starts with the question: "How will the plugin handle this?"
+So the plugin shells out to the real `yar` binary.
 
-And that question, asked early enough, makes both the language and the tooling better.
+IntelliJ's `ExternalAnnotator` runs as part of background analysis. When you edit a file, the daemon eventually re-analyzes it, and the annotator runs `yar check` against the project directory. It captures diagnostics, parses the `file:line:col: message` format, and maps errors back to source locations.
+
+Red squiggles appear where the compiler found the error. The error message is the compiler's error message, not a plugin approximation.
+
+That means the plugin's errors are exactly as accurate as the compiler.
+
+It also means they are exactly as slow as the compiler. For Yar, that is fine because checks are usually under a second. For a slower language, this would be unusable. The design leans on a property of the compiler. That is a conscious bet.
+
+The plugin detects the `yar` binary through `PATH` and verifies it exists before enabling the annotator. No binary, no squiggles. The feature degrades instead of crashing, which is apparently not a universal habit in plugin land.
+
+## What DX-first language design teaches you
+
+Building the plugin alongside the language created a feedback loop pure compiler work does not have.
+
+When a language feature was hard to support in the plugin, it usually meant the syntax was ambiguous or the scoping rules were unclear. Those problems affect every tool: formatters, linters, docs generators, not just IDE plugins.
+
+Explicit generic type arguments, `first[str](names)` instead of `first(names)` with inference, made plugin completion much simpler. The plugin does not need to run type inference to show which types a generic function was instantiated with. The source says it.
+
+That is an ergonomic tradeoff in the language that pays dividends in every tool that reads the code.
+
+Structured concurrency with `taskgroup` blocks instead of free-floating `spawn` statements had the same effect. The plugin can fold taskgroup blocks and show concurrency structure. If `spawn` could appear anywhere, like `go` in Go, the plugin would have no structural clue about concurrency boundaries.
+
+The language design made the tooling better.
+
+The tooling requirement made the language design better.
+
+Most languages discover these relationships years later, when someone builds an LSP and reports fifty syntax ambiguities the compiler resolved with undocumented heuristics.
+
+Building both at the same time means you discover them while you can still fix them.
+
+The cost is more work upfront.
+
+The payoff is a language that is toolable from day one.
+
+Nineteen commits in seven days. Syntax highlighting, navigation, completion, documentation, formatting, diagnostics, and cross-package resolution.
+
+Not because the plugin is done. It is not.
+
+Because the foundation is good enough that every future language feature starts with the right question:
+
+How will the plugin handle this?
+
+Asked early enough, that question makes both the language and the tooling better.

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
-  <title>{{ block "title" . }}{{ if .IsHome }}{{ site.Params.author }} — CTO-level engineer and technical founder{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}{{ end }}</title>
+  <title>{{ block "title" . }}{{ if .IsHome }}{{ site.Title }} | Backend systems, agents, and infrastructure{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}{{ end }}</title>
 
   {{/* Build a robust meta description: page.description → page.summary → page summary → site param */}}
   {{- $desc := "" -}}
@@ -25,6 +25,7 @@
   {{ with site.Params.author }}<meta name="author" content="{{ . }}" />{{ end }}
   {{ with site.Params.keywords }}<meta name="keywords" content="{{ delimit . ", " }}" />{{ end }}
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  {{ with resources.Get "yar.jpg" }}<link rel="icon" type="image/jpeg" href="{{ .RelPermalink }}" />{{ end }}
   <link rel="stylesheet" href="{{ "/css/plaintech.css" | absURL }}" />
   <link rel="alternate" type="application/rss+xml" title="{{ site.Title }} RSS" href="{{ "index.xml" | absURL }}" />
   {{/* Canonical URL */}}

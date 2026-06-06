@@ -1,6 +1,6 @@
 ---
 name: CI
-description: Continuous integration pipelines, build systems, and the YAML that holds it all together
+description: "CI pipelines, build systems, runners, and the YAML everyone edits but nobody owns"
 ---
 
-Runners, workflows, flaky tests, and the slow realization that your CI pipeline is a distributed system that nobody owns. What breaks, what costs money, and what to do about it.
+Runners, workflows, flaky tests, and the slow realization that CI is a distributed system with invoices. What breaks, what costs money, and what to do about it.

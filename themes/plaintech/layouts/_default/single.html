@@ -15,7 +15,7 @@
   {{ $related := .Site.RegularPages.Related . | first 3 }}
   {{ with $related }}
   <aside class="related-posts" aria-labelledby="related-title">
-    <h2 id="related-title">Related posts</h2>
+    <h2 id="related-title">More like this</h2>
     <ul class="post-list" role="list">
       {{ range . }}
       <li>

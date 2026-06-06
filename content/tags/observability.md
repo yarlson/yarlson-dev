@@ -1,6 +1,6 @@
 ---
 name: Observability
-description: Monitoring, logging, tracing, and the art of understanding what your systems are actually doing
+description: "Logs, metrics, traces, and the awkward truth that you cannot operate what you cannot see"
 ---
 
-Dashboards, structured logs, and the debugging sessions that happen when you don't have either. You can't operate what you can't see — and most developer infrastructure is invisible.
+Dashboards, structured logs, and the debugging sessions that happen when you do not have either. You cannot operate what you cannot see, and most developer infrastructure is still half invisible.

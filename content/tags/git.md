@@ -1,6 +1,6 @@
 ---
 name: Git
-description: A distributed version control system for tracking changes in source code
+description: "Git workflows, commit hygiene, and tools built on top of the boring thing everything depends on"
 ---
 
-Version control workflows, commit hygiene, and tools built on top of Git. The boring infrastructure that keeps everything else from falling apart.
+Version control workflows, commit hygiene, and tools built on top of Git. Boring infrastructure, until it breaks and everyone suddenly cares.

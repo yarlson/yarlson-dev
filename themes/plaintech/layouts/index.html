@@ -6,7 +6,7 @@
 {{ $paginator := .Paginate $regular }}
 
 {{ if eq $paginator.PageNumber 1 }}
-<p class="site-tagline">CTO-level engineer and technical founder writing about backend systems, AI agent workflows, developer platforms, infrastructure, and the things that quietly break in prod.</p>
+<p class="site-tagline">I write about backend systems, coding agents, infrastructure, CLI tools, and the boring details that decide whether software works in production.</p>
 
 {{ with $pinned }}
 <section class="featured-section" aria-label="Featured posts">
@@ -26,7 +26,7 @@
 {{ end }}
 {{ end }}
 <section aria-labelledby="home-title">
-  <h2 id="home-title" class="section-label">Latest Posts</h2>
+  <h2 id="home-title" class="section-label">Latest writing</h2>
   <ul class="post-list" role="list">
     {{ range $paginator.Pages }}
     <li>

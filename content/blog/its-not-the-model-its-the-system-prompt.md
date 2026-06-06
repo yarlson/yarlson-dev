@@ -1,82 +1,124 @@
 ---
 title: "It's Not the Model. It's the System Prompt You Never Wrote."
-summary: "Most complaints about coding agents are really complaints about empty context. CLAUDE.md, distilled project docs, and a few well-named slash commands turn the same model from 'crappy autocomplete' into something that runs unattended for hours and ships."
+summary: "Most complaints about coding agents are complaints about empty context. CLAUDE.md, distilled project docs, and a few slash commands change the same model from autocomplete into something useful."
 postLayout: simple
 date: "2026-04-28"
 tags:
   - llm
 ---
 
-A coworker dropped a screenshot in Slack the other day. Claude had hallucinated half a function, glued it onto a real one, and confidently labeled the result "ready for review." He captioned it: "bloody Claude." The collective sigh in the channel was audible.
+A coworker dropped a screenshot in Slack. Claude had hallucinated half a function, glued it onto a real one, and confidently labeled the result "ready for review." He captioned it: "bloody Claude."
 
-I asked which model and which interface. The screenshot looked like a crappy Electron app, not the CLI I use every day. Turns out he was running Anthropic's VS Code extension — billed by the docs as "the recommended way to use Claude Code in VS Code."
+Fair reaction.
 
-I give up on that framing. The extension isn't why his agent looked stupid.
+I asked which model and interface. The screenshot looked like a cursed Electron wrapper, not the CLI I use every day. Turns out he was running Anthropic's VS Code extension, which the docs frame as the recommended way to use Claude Code in VS Code.
 
-## What People Are Actually Complaining About
+That framing annoys me.
 
-When someone shows me a "Claude is dumb" screenshot, ninety percent of the time the same two things are missing.
+The extension is not why his agent looked stupid.
 
-1. Any system prompt that tells the agent what kind of project this is, what to do, and what to never do.
-2. Any distilled context — a summary of the architecture, the conventions, the names of things — that the agent can read without rebuilding it from scratch every session.
+## What people are actually complaining about
 
-Without these, the model is starting from absolute zero on every task. It greps for the test runner. It opens three random files to figure out the layout. It guesses the naming scheme. That's not the model failing. That's the model doing the only thing it can with no inputs.
+When someone shows me a "Claude is dumb" screenshot, most of the time the same two things are missing.
 
-The IDE skin around the model doesn't fix this. A nicer panel for typing prompts is still a panel for typing prompts.
+1. A project prompt that tells the agent what kind of codebase this is, what to do, and what to never do.
+2. Distilled context: architecture, conventions, names, and invariants the agent can read without rediscovering them from scratch.
 
-## Guardrails Live in CLAUDE.md
+Without those, the model starts from zero every task. It greps for the test runner. It opens random files to infer the layout. It guesses naming from whichever file it saw first.
 
-The first lever is the project-level system prompt. Claude Code reads `CLAUDE.md`. Codex and friends read `AGENTS.md`. Same idea, different filename. This file is where you write the rules a senior engineer would tell a new contributor on day one — except the new contributor never tires of being told.
+That is not the model failing in some interesting way. That is the model doing the only thing it can with no real inputs.
 
-Mine are short and aggressive. Things like:
+The IDE skin around it does not fix this. A nicer prompt box is still just a prompt box.
+
+## Guardrails live in CLAUDE.md
+
+The first lever is the project-level system prompt.
+
+Claude Code reads `CLAUDE.md`. Codex and friends read `AGENTS.md`. Same concept, different filename.
+
+This file is where you write the rules a senior engineer would give a new contributor on day one, except this contributor never gets tired of being told.
+
+Mine are short and aggressive:
 
 - Write the test before the implementation. No exceptions.
 - After every code change, run `golangci-lint run` and `go test ./...`. Both must pass before you stop.
-- Don't pin dependency versions on install — `go get package@latest`, then `go mod tidy`.
+- Do not pin dependency versions on install. Use `go get package@latest`, then `go mod tidy`.
 - For CLI/TUI output, take a screenshot and verify it visually before claiming it works.
 
-That's not philosophy. That's "if you skip this, you're going to break the build, and I'm going to have to reroll." Guardrails. Do this, don't do that. The model genuinely follows them, because they're sitting in its context every single turn.
+That is not philosophy. That is "if you skip this, you break the build, and I have to reroll."
 
-A `CLAUDE.md` written like this turns "act as a helpful assistant" — which is the default — into "act as the engineer this codebase already has." The difference in output is not subtle.
+Guardrails. Do this. Do not do that.
 
-## Distilled Context Beats On-Demand Exploration
+The model follows them because they sit in context every turn.
 
-The second lever is the one most people skip, because it requires writing a thing once. The payoff is that you stop paying for it on every task.
+A `CLAUDE.md` written like this turns "act as a helpful assistant" into "act like the engineer this codebase already has." The difference is not subtle.
 
-I have a slash command called [`/project-context`](https://github.com/yarlson/dotfiles/blob/main/.claude/commands/project-context.md). It walks the repo, classifies it as single-project or monorepo, and writes structured documents into `docs/context/` — a one-page `summary.md`, a `terminology.md`, a `practices.md`, and a `context-map.md` index. The rules are strict: no dates, no changelogs, no "recent completions," no aspirational standards. Only facts supported by code, config, or tests. When context conflicts with reality, code wins.
+## Distilled context beats rediscovery
 
-Why does this matter? Because without it, every agent invocation re-discovers your repo from scratch. Multiply that by every task, every reviewer pass, every fixer retry, and you've built a token furnace that produces inconsistent answers.
+The second lever is the one most people skip because it requires writing a thing once.
 
-With `docs/context/` in place, every phase reads the same distilled facts. Not the entire repo. Not whatever happened to be open. The actual, durable rules. The agent stops guessing and starts working.
+The payoff is that you stop paying for rediscovery on every task.
 
-This isn't novel. It's exactly what we do for new hires. We write a `CONTRIBUTING.md`, a `README.md`, an architecture doc. The only difference is that for a new hire you can hope they remember it. For an agent you can guarantee they read it on every turn.
+I have a slash command called [`/project-context`](https://github.com/yarlson/dotfiles/blob/main/.claude/commands/project-context.md). It walks the repo, classifies it as single-project or monorepo, and writes structured docs into `docs/context/`: a one-page `summary.md`, a `terminology.md`, a `practices.md`, and a `context-map.md`.
 
-## Slash Commands Are Bottled Engineering Process
+The rules are strict: no dates, no changelogs, no "recent completions," no aspirational standards. Only facts supported by code, config, or tests. When context conflicts with reality, code wins.
 
-Once you've got guardrails and context, the third lever is repeatable workflows. Slash commands. These are the parts of your job that feel mechanical when described — "go through CodeRabbit's review comments, decide which are real, fix those, push, resolve threads" — but require enough judgment that you don't want to skip the judgment.
+Why does this matter?
 
-I have one called [`/coderabbit`](https://github.com/yarlson/dotfiles/blob/main/.claude/commands/coderabbit.md). It does exactly that workflow, with one rule baked in: classify every comment into three buckets — fix, optional, skip — and act only on fix. No blind acceptance. No defensive replies. No unrelated refactoring smuggled in alongside the fixes. Show judgment, not obedience.
+Because without it, every agent invocation re-discovers your repo from scratch. Multiply that by every task, reviewer pass, and fixer retry, and you have built a token furnace that returns inconsistent answers.
 
-That last line matters. Without it, an agent will accept every suggestion the bot makes, churn the diff, and convince itself it's being thorough. With it, the agent does what a competent engineer does on a Friday afternoon — fixes the real ones, ignores the noise, replies tightly, and moves on.
+With `docs/context/` in place, each phase reads the same durable facts. Not the whole repo. Not whatever happened to be open. The actual rules.
 
-The slash command is the bottle. The workflow is the lightning.
+The agent stops guessing and starts working.
 
-## What This Setup Actually Buys You
+This is not novel. It is what we do for new hires: `README`, `CONTRIBUTING`, architecture notes. The difference is that with humans you hope they remember it. With agents you can force the read.
 
-I'll show you the receipts. I have a tool called [`snap`](https://github.com/yarlson/snap) that runs Claude in a loop — plan, implement with TDD, review, fix, commit, push, monitor CI, auto-fix CI failures. It depends on the project having a real `AGENTS.md` and a real `docs/context/`. With those in place, it runs unattended for hours and ships.
+## Slash commands are bottled process
 
-Earlier this year I used it to build [`yar`](https://github.com/yarlson/yar) — a compiled programming language with its own type checker, garbage collector, and standard library. About 19,000 lines of Go across 73 commits. I wrote the design proposals. snap wrote a lot of the code. The output is not perfect. It is genuinely better than what I would have produced manually in the same wall-clock time, because I would have stopped to sleep.
+Once guardrails and context exist, the third lever is repeatable workflows.
 
-That outcome is not because the model is magic. It's because the model is reading an `AGENTS.md` that says "TDD or nothing," a `docs/context/` that explains the language's invariants, and a set of slash commands that bottle the boring parts. The work is in the configuration, and it's a one-time cost.
+Slash commands are the parts of your job that sound mechanical when described but still require judgment.
 
-## Back to the Screenshot
+One of mine is [`/coderabbit`](https://github.com/yarlson/dotfiles/blob/main/.claude/commands/coderabbit.md). It triages CodeRabbit comments on the current PR with one rule baked in: classify every comment into fix, optional, or skip, and act only on fix. No blind acceptance. No defensive replies. No unrelated refactoring smuggled in alongside the fixes.
 
-So when someone in Slack shares a "bloody Claude" moment, the question isn't "which IDE are you using." The question is: what does your `CLAUDE.md` say? What's in your `docs/context/`? What slash commands have you written for the parts of your job you've already done a hundred times?
+Show judgment, not obedience.
 
-The IDE is a window into the agent. The agent is whatever you configured it to be. The recommended way to use a coding agent isn't a UI. It's a system prompt with teeth, a distilled context the agent can actually read, and a small library of bottled processes that capture how you actually work.
+That line matters. Without it, the agent accepts every bot suggestion, churns the diff, and congratulates itself for being thorough. With it, the agent behaves like a competent engineer on a Friday afternoon: fix the real ones, ignore the noise, reply tightly, move on.
 
-Without those, you're driving a car with no fuel and complaining about the dashboard.
+The slash command is the bottle. The process is the useful part.
 
-With them, you can hand the keys to the agent on Friday evening and have something worth reviewing on Monday morning.
+## What this setup buys you
+
+I have a tool called [`snap`](https://github.com/yarlson/snap) that runs Claude in a loop: plan, implement with TDD, review, fix, commit, push, monitor CI, auto-fix CI failures.
+
+It depends on the project having a real `AGENTS.md` and a real `docs/context/`. With those in place, it can run unattended for hours and ship.
+
+Earlier this year I used it to build [`yar`](https://github.com/yarlson/yar), a compiled programming language with its own type checker, garbage collector, and standard library. About 19,000 lines of Go across 73 commits. I wrote the design proposals. snap wrote a lot of the code.
+
+The output is not perfect. It is genuinely better than what I would have produced manually in the same wall-clock time, because I would have stopped to sleep.
+
+That outcome is not model magic. It is the model reading an `AGENTS.md` that says "TDD or nothing," a `docs/context/` folder that explains the language's invariants, and slash commands that bottle the boring parts.
+
+The work is in the setup.
+
+And it is mostly a one-time cost.
+
+## Back to the screenshot
+
+When someone shares a "bloody Claude" moment, the useful question is not "which IDE are you using?"
+
+The useful questions are:
+
+- What does your `CLAUDE.md` say?
+- What is in your `docs/context/`?
+- What slash commands have you written for the work you already repeat?
+
+The IDE is a window into the agent. The agent is whatever you configured it to be.
+
+The recommended way to use a coding agent is not a UI. It is a system prompt with teeth, distilled context the agent can read, and a small library of workflows that capture how you actually work.
+
+Without those, you are driving a car with no fuel and complaining about the dashboard.
+
+With them, you can hand the agent real work and get something worth reviewing.
 
 Write the `CLAUDE.md`.

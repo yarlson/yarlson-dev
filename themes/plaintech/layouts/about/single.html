@@ -45,7 +45,7 @@
     </div>
   </section>
   <section class="latest-posts">
-    <h2>Latest author posts</h2>
+    <h2>Recent writing</h2>
     <ul class="latest-list" role="list">
       {{ range first 5 (where .Site.RegularPages "Type" "in" (slice "blog" "post")) }}
         <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>

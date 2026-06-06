@@ -1,6 +1,6 @@
 ---
 name: CLI
-description: Command-line interfaces, tooling practices, and terminal-based workflows
+description: "Command-line tools, terminal UX, and the output contracts that keep scripts from hating you"
 ---
 
-Building CLI tools that earn trust. Design patterns, terminal UX, and the details that separate a script from something people actually rely on.
+Building CLI tools that earn trust. Terminal UX, output contracts, flags, exit codes, and the details that separate a script from a tool people rely on.

@@ -17,14 +17,14 @@
 {{- with site.Params.github }}{{ $sameAs = $sameAs | append . }}{{ end -}}
 {{- with site.Params.linkedin }}{{ $sameAs = $sameAs | append . }}{{ end -}}
 {{- with site.Params.twitter }}{{ $sameAs = $sameAs | append (printf "https://x.com/%s" (strings.TrimPrefix "@" .)) }}{{ end -}}
-{{- $knowsAbout := site.Params.keywords | default (slice "AI agents" "Go engineering" "infrastructure" "developer platforms" "technical leadership") -}}
+{{- $knowsAbout := site.Params.keywords | default (slice "AI agents" "Go engineering" "infrastructure" "developer platforms" "backend systems") -}}
 {{- $person := dict
   "@type" "Person"
   "name" $authorName
   "alternateName" "Yaroslav Kravtsov"
   "url" site.BaseURL
   "sameAs" $sameAs
-  "jobTitle" (site.Params.jobTitle | default "CTO-level Engineer and Technical Founder")
+  "jobTitle" (site.Params.jobTitle | default "Senior Software Engineer")
   "knowsAbout" $knowsAbout
 -}}
 {{- if .IsPage -}}

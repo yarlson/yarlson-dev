@@ -1,6 +1,6 @@
 ---
 name: Docker
-description: A platform for developing, shipping, and running applications in containers
+description: "Containers, Dockerfiles, networking, deployment, and the cache misses everyone blames on Docker"
 ---
 
-Containers, networking, deployment pipelines, and the genuinely useful parts of the Docker ecosystem. Less theory, more "here's what actually works in production."
+Containers, networking, deployment pipelines, and the useful parts of Docker. Less theory, more "here is what actually works in production."

@@ -1,6 +1,6 @@
 ---
 name: Yar
-description: The Yar programming language — a compiled language with explicit error handling, generics, and structured concurrency
+description: "Yar, a compiled language with explicit errors, generics, structured concurrency, and tooling built alongside it"
 ---
 
-Building a programming language from scratch. Compiler internals, language design decisions, runtime implementation, and the tooling ecosystem around Yar.
+Building a programming language from scratch. Compiler internals, language design, runtime work, and the tooling around Yar.
