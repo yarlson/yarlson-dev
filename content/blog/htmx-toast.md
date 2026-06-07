@@ -1,6 +1,6 @@
 ---
-title: 'Toasts with HTMX — the clean way to say "it worked"'
-summary: "Build lightweight, reactive toast notifications without React, frameworks, or JavaScript bloat. A step-by-step guide to clean, declarative UI using HTMX, CSS, and a few honest lines of code."
+title: 'Toasts with HTMX: a Small Way to Say "It Worked"'
+summary: "A toast notification does not need React, a provider, a portal, or a bundle. HTMX out-of-band swaps plus a little CSS get most of the way there."
 postLayout: simple
 date: "2025-10-20"
 tags:
@@ -11,13 +11,13 @@ A "Saved!" notification. Green box, top-right corner, fades after four seconds. 
 
 And yet, in 2025, the default answer is: install React, wire up a context provider, pull in a toast library, configure a portal, hydrate 200 kB of JavaScript, and pray your bundle analyzer doesn't make you cry. For a green box.
 
-Let's talk about what happens when you refuse to do that.
+Here is what happens when you refuse to do that.
 
 ---
 
 ## Step 1 — Zero JS, pure HTMX + CSS
 
-HTMX can swap fragments of HTML into your page, even _outside_ the normal target. Out-of-band swaps. This one feature is genuinely all you need.
+HTMX can swap fragments of HTML into your page, even _outside_ the normal target. Out-of-band swaps. This one feature is enough for the basic version.
 
 ```html
 <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
@@ -80,13 +80,13 @@ CSS handles the entrance:
 }
 ```
 
-That's 90% of the feature. Done. If auto-dismiss is all you need, stop reading. You've already shipped something better than most dashboards built with full component libraries. Seriously.
+That's 90% of the feature. If auto-dismiss is all you need, stop there.
 
 ---
 
 ## Step 2 — A close button, still no JS
 
-But here's the thing — users like control. They want to swat that toast away before the timer runs out. Fair enough. You can still do it without a single line of JavaScript.
+Users like control. They want to dismiss the toast before the timer runs out. Fair enough. You can still do it without writing JavaScript.
 
 ```html
 <div id="toasts" hx-swap-oob="true">
@@ -136,7 +136,7 @@ Read that `_` attribute out loud:
 
 > on load, wait 4 seconds, then add .fading, then wait 300 ms, then remove me
 
-It reads like English. And for once, that's not an insult. No webpack. No `import React`. No special runtime beyond a small script tag. Just markup that describes its own behavior. Declarative UI is a superpower.
+It reads like English. And for once, that's not an insult. No webpack. No `import React`. No special runtime beyond a small script tag. Just markup that describes its own behavior.
 
 ---
 
@@ -192,8 +192,8 @@ Run `go run main.go`, open `localhost:8080`, and watch an HTML-native UI do the 
 
 ---
 
-So what did we actually build here? A toast system that starts at zero JavaScript and tops out at three lines. Four progressively honest approaches, each one trading a tiny bit of purity for a tiny bit of pragmatism. The server sends HTML. The browser renders HTML. Nobody had to negotiate with a bundler.
+So what did we actually build here? A toast system that starts at zero JavaScript and tops out at three lines. Four versions, each one trading a little purity for a little pragmatism. The server sends HTML. The browser renders HTML. Nobody had to negotiate with a bundler.
 
-HTMX doesn't reject JavaScript. It rejects ceremony. It lets you think in HTML again, build from the server outward, and reach for JS only when the alternative is genuinely worse. A minimal toolchain doesn't mean a minimal experience. It means you ship faster, sleep better, and never have to debug a toast provider's context boundary at 2 AM.
+HTMX doesn't reject JavaScript. It rejects ceremony. It lets you think in HTML again, build from the server outward, and reach for JS only when the alternative is worse.
 
 A bit of HTML, a sprinkle of CSS, and — fine — three lines of JavaScript. Because `/_empty` is ugly and life is short.

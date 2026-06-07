@@ -1,21 +1,21 @@
 ---
-title: "The Hidden Cost of UI Frameworks for CLI Tasks in Go"
-summary: "Discover why using modern UI frameworks for simple CLI tasks in Go can lead to unnecessary complexity. Learn about choosing the right tools for CLI development and the importance of matching solutions to problems."
+title: "The Hidden Cost of UI Frameworks in Go CLIs"
+summary: "I needed a spinner for a Go CLI and ended up inside a UI architecture. Some terminal libraries are great. They are also the wrong tool for a linear command that just needs progress output."
 postLayout: simple
 date: "2024-12-01"
 tags:
   - go
 ---
 
-I needed a spinner. A loading indicator. The kind of thing that tells a user "hang on, something's happening" while a server gets provisioned or a file gets downloaded. Four lines of code, tops. Instead, I ended up neck-deep in The Elm Architecture, writing message-passing pipelines for a progress dot that spins.
+I needed a spinner. A loading indicator. The thing that tells a user "hang on, something's happening" while a server gets provisioned or a file gets downloaded.
 
-Let's talk about how that happens.
+Four lines of code, tops. Instead, I ended up inside The Elm Architecture, writing message-passing pipelines for a progress dot.
 
 ## The Demo Trap
 
 Search for "Go CLI library" and Bubbletea will find you within thirty seconds. The demos are gorgeous. Smooth animations, rich interactivity, elegant state management borrowed from functional frontend frameworks. It looks like the future of terminal applications, and your brain immediately starts whispering: _wouldn't it be nice if your tool looked like that?_
 
-But here's the thing. You're not building a terminal application. You're building a CLI tool. Those are genuinely different things, and treating them as interchangeable is where the wheels come off.
+But you're not always building a terminal application. Often you're building a CLI tool. Those are different things, and treating them as interchangeable is where the wheels come off.
 
 ## CLIs Are Not UIs
 
@@ -91,7 +91,7 @@ The pattern here is obvious. The libraries that tried to be more ended up delive
 
 ## Why ysmrr Won
 
-Simplicity is a superpower. The API follows traditional CLI patterns -- start thing, do work, stop thing. No data races because there's no complex state to race over. The code stays readable six months later because there's nothing clever in it. When I needed multiple spinners, they worked without a migration to a different mental model.
+The API follows traditional CLI patterns: start thing, do work, stop thing. No data races because there's no complex state to race over. The code stays readable six months later because there's nothing clever in it. When I needed multiple spinners, they worked without a migration to a different mental model.
 
 That's it. That's the whole pitch. It does the job and gets out of the way.
 
@@ -103,17 +103,17 @@ But how many of us are building terminal text editors? Most Go CLI tools run a c
 
 ## The Uncomfortable Truth
 
-The framework instinct is strong in this industry. We reach for the most powerful tool available because it feels responsible. Professional. But power you don't need isn't free. It's complexity you carry, bugs you debug, abstractions you explain to the next person who opens your code.
+The framework instinct is strong in this industry. We reach for the most powerful tool available because it feels responsible. But power you don't need isn't free. It's complexity you carry, bugs you debug, abstractions you explain to the next person who opens your code.
 
 CLI tools have worked a certain way for decades. Linear execution, simple output, predictable behavior. Those patterns survived because they're right. Wrapping them in a reactive UI framework doesn't improve them. It just makes them harder to maintain.
 
-Matching the tool to the task -- actually matching it, not reaching for the impressive option -- is the skill that separates shipping software from architecture tourism. Your CLI doesn't want to be a web app. Let it be a CLI.
+Matching the tool to the task is the actual skill. Not reaching for the impressive option. Not turning a command into a tiny frontend app because the demo looked nice.
 
-Build the simple thing. Ship it. Move on.
+Your CLI doesn't want to be a web app. Let it be a CLI.
 
 ## Resources
 
 - [ftl](https://github.com/yarlson/ftl) - My CLI project where I learned these lessons
 - [chelnak/ysmrr](https://github.com/chelnak/ysmrr) - The spinner library I recommend
 - [12 Factor CLI Apps](https://medium.com/@jdxcode/12-factor-cli-apps-dd3c227a0e46) - Great guidelines for CLI development
-- [Command Line Interface Guidelines](https://clig.dev/) - Best practices for CLI design
+- [Command Line Interface Guidelines](https://clig.dev/) - Practical CLI design reference

@@ -1,6 +1,6 @@
 ---
-title: "Naming in Go: A Deep Dive into Function and Variable Conventions"
-summary: "A guide to Go naming conventions for functions and variables. Covers best practices for clarity, consistency, and idiomatic Go code to improve readability and maintainability."
+title: "Naming in Go Is Part of the Program"
+summary: "Go uses names for more than readability. Casing controls visibility, short variables signal scope, and consistent verbs keep packages understandable."
 postLayout: simple
 date: "2024-02-12"
 tags:
@@ -11,7 +11,7 @@ Go made visibility a naming convention. One capital letter decides whether the r
 
 ## Casing Is Access Control
 
-Let's talk about the thing that makes Go genuinely unusual. PascalCase means exported. camelCase means unexported. This isn't a style guide suggestion you can ignore. It's the language.
+Go's unusual part is simple: PascalCase means exported. camelCase means unexported. This isn't a style guide suggestion you can ignore. It's the language.
 
 ```go
 type User struct {  // Exported (public) type
@@ -28,7 +28,7 @@ func (u *User) increaseAge() {  // Unexported method
 }
 ```
 
-A single letter controls visibility. No `public` keyword. No `private` annotation. Just the first letter. That is a superpower. You glance at any symbol in any file and you immediately know its scope. But here's the thing -- it only works if you respect the rest of the naming conventions too.
+A single letter controls visibility. No `public` keyword. No `private` annotation. Just the first letter. You glance at any symbol in any file and you immediately know its scope. That only works if the rest of the naming stays disciplined too.
 
 ## The Conventions That Actually Matter
 
@@ -77,7 +77,7 @@ func ValidateInput(input string) bool {
     // implementation
 }
 
-// For constructor-like functions, we often use "New" prefix
+// Constructor-like functions usually use the "New" prefix.
 func NewHandler() *Handler {
     // implementation
 }
@@ -216,8 +216,8 @@ user, err := GetUser(id)
 
 ## Why This All Matters
 
-Naming is the cheapest, highest-leverage thing you can do for code quality. Good names shrink code reviews, flatten the onboarding curve, and kill the need for half your comments. They make refactoring safer because the intent is right there in the identifier. They make bugs more visible because a function doing something its name doesn't describe sticks out.
+Naming is one of the cheapest code quality improvements you get. Good names shrink reviews, make onboarding less painful, and delete half the comments people were going to write. They make refactoring safer because the intent is right there in the identifier. They make bugs more visible because a function doing something its name doesn't describe sticks out.
 
 Go's naming conventions aren't arbitrary. They're a compression algorithm for intent. Casing encodes visibility. Brevity encodes scope. Verb choice encodes behavior. Every convention is load-bearing.
 
-Next time you're about to name something, take the extra five seconds. Your teammates will read that name a thousand times. Make it count.
+Take the extra five seconds. Your teammates will read that name a thousand times.

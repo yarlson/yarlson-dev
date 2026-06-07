@@ -76,7 +76,7 @@ Sure. Good idea.
 
 Except nobody configured concurrency limits.
 
-So the bot opens 24 pull requests in two hours. Each PR triggers the full CI pipeline. Twenty-four simultaneous runs compete for the same runner pool. Engineers trying to merge real work now sit behind automated patch bumps to logging libraries.
+So the bot opens 24 pull requests in two hours. Each PR triggers the full CI pipeline. Twenty-four simultaneous runs compete for the same runner pool. Engineers trying to merge product work now sit behind automated patch bumps to logging libraries.
 
 That is a self-inflicted denial-of-service attack.
 

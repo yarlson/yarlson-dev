@@ -82,7 +82,7 @@ Every element in the tree, every keyword, identifier, and whitespace token, is a
 
 The framework uses those interfaces to power features with surprisingly little glue. If a struct declaration implements `PsiNamedElement` with a working `setName()`, and references implement `handleElementRename()`, rename refactoring works across the project. If an identifier reference implements `PsiReference` with a `resolve()` method, go-to-definition works.
 
-Reference resolution was the interesting part. When you write `myStruct.field`, the plugin has to:
+Reference resolution was the hard part. When you write `myStruct.field`, the plugin has to:
 
 1. Resolve `myStruct` to its declaration
 2. Find the type of that declaration

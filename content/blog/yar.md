@@ -1,6 +1,6 @@
 ---
 title: "I Asked ChatGPT If Building a Language Was Hard. Now I Have a Compiler."
-summary: "Four months ago I asked ChatGPT a dumb question while walking my dog. It told me building a programming language wasn't that hard. So I built one — a compiled language with explicit error handling, generics, structured concurrency, and a garbage collector. Here's what happened."
+summary: "Four months ago I asked ChatGPT a dumb question while walking my dog. It told me building a programming language wasn't that hard. Now I have a compiler, a type system, generics, structured concurrency, and a garbage collector."
 postLayout: simple
 date: "2026-04-01"
 tags:
@@ -17,7 +17,7 @@ ChatGPT, with the confidence of a consultant who's never touched production, sai
 
 And like a fool who's never met a rabbit hole he didn't dive into, I believed it. 73 commits, ~19,000 lines of Go, and 26 design proposals later — I have a compiled language with its own type system, garbage collector, and standard library. The dog is fine. Confused, but fine.
 
-## Let's Talk About What This Actually Is
+## What This Actually Is
 
 The language is called [Yar](https://github.com/yarlson/yar). It compiles to native executables through LLVM IR and clang. The compiler is written in Go — its own lexer, parser, type checker, and code generator. No parser generators, no frameworks, no magic. Just direct Go code that reads `.yar` files and spits out LLVM IR.
 
@@ -63,7 +63,7 @@ Fair question. And the honest answer is: I didn't set out to replace anything. I
 
 But along the way, I started making opinionated choices. And those choices turned into something I genuinely like.
 
-Errors are values, but you can't ignore them. Go lets you `_ , _ = someCall()` and walk away. Yar doesn't — the compiler rejects unhandled errorable expressions. Explicitness is a superpower.
+Errors are values, but you can't ignore them. Go lets you `_ , _ = someCall()` and walk away. Yar doesn't — the compiler rejects unhandled errorable expressions. Explicitness is enforced, not suggested.
 
 Enums are closed and `match` is exhaustive:
 
@@ -112,7 +112,7 @@ No inference, no ambiguity. You always know what types are in play. The compiler
 
 Look, this project wouldn't exist without AI coding assistants. Not because AI wrote the compiler — but because it collapsed the research phase from days to minutes. LLVM's `getelementptr` semantics? Working explanation in seconds. How to implement a conservative garbage collector? Solid starting point instead of three hours in documentation that assumes you already know what you're doing. The right calling convention for closures? Answered before I finished the question.
 
-But here's the thing about AI and compilers: AI is genuinely excellent at explaining concepts and generating boilerplate. It is genuinely terrible at making architectural decisions. Every proposal in the `docs/language/proposals/` directory — from the error model to the concurrency design — was a deliberate design choice that required understanding tradeoffs between alternatives I had to live with. AI doesn't live with your tradeoffs. You do.
+AI is genuinely excellent at explaining concepts and generating boilerplate. It is genuinely terrible at making architectural decisions. Every proposal in the `docs/language/proposals/` directory — from the error model to the concurrency design — was a deliberate design choice that required understanding tradeoffs between alternatives I had to live with. AI doesn't live with your tradeoffs. You do.
 
 The compiler is written with the same Go style I use professionally. Small packages. Explicit error handling. No cleverness. Claude handled the tedious parts. The interesting parts were still interesting.
 
@@ -124,7 +124,7 @@ What's missing: a proper M:N scheduler (the current implementation uses POSIX th
 
 I documented everything. The language has a style guide called [The Yar Code](https://github.com/yarlson/yar/blob/main/docs/language/the-yar-code.md) — thirteen articles covering how Yar programs should be written, from error handling to closure semantics to nil safety. Every feature has a design proposal with motivation, alternatives considered, and implementation notes. Because if there's one thing building a language teaches you, it's that undocumented assumptions are time bombs.
 
-## What This Taught Me
+## What I Learned
 
 Building a programming language is not easy. ChatGPT lied. But the process teaches you more about language design than any amount of reading ever could.
 

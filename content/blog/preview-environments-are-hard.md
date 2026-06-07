@@ -72,7 +72,7 @@ The proper fix is service discovery, health-check-driven routing, and graceful c
 
 So the quick fix stays. It becomes part of the deploy config. Six months later, someone sees "restart proxy" baked into every deploy and asks why. The answer is: because the proper fix was always next quarter, and next quarter never arrived.
 
-This happens everywhere, but preview environments are especially good at collecting these compromises. They sit between production-grade and "good enough for dev." Nothing gets full production treatment, so everything collects workarounds.
+This happens everywhere, but preview environments are especially good at collecting these compromises. They sit between production and "good enough for dev." Nothing gets full production treatment, so everything collects workarounds.
 
 ## Ephemeral is a policy, not a property
 
@@ -94,7 +94,7 @@ Infrastructure defined as temporary becomes permanent the moment it is useful. W
 
 ## Multi-service stacks are where it gets real
 
-The real unlock is multi-service preview environments. Not just your API in isolation, but the API, worker, frontend, queue, and related services from the same set of PRs, all pointed at each other.
+The useful version is multi-service preview environments: the API, worker, frontend, queue, and related services from the same set of PRs, all pointed at each other.
 
 That is also where complexity stops being polite.
 

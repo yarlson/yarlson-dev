@@ -86,7 +86,7 @@ Where does each piece go? Here's the contract:
 
 Print this on a wall. Refer to it during code review. Every violation creates a downstream papercut for someone writing automation against your tool.
 
-## Structured Output Is a Superpower
+## Structured Output Is a Contract
 
 Look, forcing users to parse ASCII tables with `awk` is genuinely hostile. We needed resource IDs from 300 database instances. The existing CLI output looked like this:
 
@@ -177,7 +177,7 @@ export CLI_REGION=us-east
 cli deploy
 ```
 
-But here's the thing most teams miss: document which configuration sources each flag respects. Hidden precedence rules are just bugs you haven't found yet.
+Most teams miss one detail: document which configuration sources each flag respects. Hidden precedence rules are just bugs you haven't found yet.
 
 ## Error Messages That Actually Help
 
@@ -228,7 +228,7 @@ For long-running operations, use **Optimistic UI**: acknowledge the command imme
 - Use `--` to delimit flags from positional arguments
 
 **Predictable verbs:**
-Use standard verb-noun pairings (`get`, `list`, `create`, `delete`) rather than creative synonyms (`fetch`, `show`, `make`, `remove`). Muscle memory is a superpower. Let it transfer from system tools to your CLI without friction.
+Use standard verb-noun pairings (`get`, `list`, `create`, `delete`) rather than creative synonyms (`fetch`, `show`, `make`, `remove`). Users already know these shapes from system tools. Reuse that muscle memory.
 
 **Help that teaches:**
 The `--help` output must include concrete, copy-pasteable usage examples. Not just flag definitions. Show common workflows:
@@ -269,7 +269,7 @@ Not every tool needs the full treatment. Knowing when to skip rules matters as m
 - [ ] Return structured data on stdout for write operations
 - [ ] Show progress indicators only on stderr
 
-Let's talk about what this all adds up to. TTY awareness, clean stream contracts, structured output, idempotency, dry-run, sane configuration, actionable errors, fast startup, standard interfaces. None of these ideas are novel. Every one of them is a solved problem. But the gap between knowing them and shipping a CLI that actually respects all of them is where most tools fall apart. The Gold Standard isn't about individual features. It's about the discipline of treating your CLI as a contract with every human and machine that will ever call it. Build that contract carefully, and your tool earns something scripts never do: trust.
+This adds up to a contract: TTY awareness, clean stream behavior, structured output, idempotency, dry-run, sane configuration, actionable errors, fast startup, and standard interfaces. None of these ideas are novel. Every one of them is a solved problem. The gap is between knowing them and shipping a CLI that respects all of them. Build that contract carefully and your tool earns trust that a script never will.
 
 ## References
 

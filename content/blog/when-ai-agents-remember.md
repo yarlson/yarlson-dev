@@ -1,6 +1,6 @@
 ---
-title: "When AI Agents Remember: Building Persistent Memory for Autonomous Coding"
-summary: "What happens when you give an AI coding agent memory that persists across tasks? It stops repeating the same mistakes. Here's how lgtm and snap use persistent findings, shared context, and self-recovery to close the loop from planning to merged PR."
+title: "AI Coding Agents Need Memory"
+summary: "Stateless agents repeat mistakes. lgtm and snap use a findings file, shared codebase context, and recovery loops so later tasks can use what earlier tasks already learned."
 postLayout: simple
 date: "2026-03-01"
 tags:
@@ -22,7 +22,7 @@ Why? Because each task started with a blank slate. The agent had zero access to 
 
 Look, the fix is embarrassingly simple. A file called `findings.md` that lives in `.lgtm/` and accumulates knowledge across the entire run. After each task — success or failure — the system writes what it discovered. Which test patterns work. Which verification commands are correct. Which architectural constraints exist.
 
-But here's the thing: findings aren't just logged. They're injected into the planner and implementer prompts for every subsequent task. The agent reads its own history before touching new work.
+Findings aren't just logged. They're injected into the planner and implementer prompts for every subsequent task. The agent reads its own history before touching new work.
 
 ```go
 // Before planning the next task, load accumulated findings
@@ -42,11 +42,11 @@ The solution is AI-powered self-compaction. When `findings.md` exceeds 8KB, lgtm
 
 Using the same LLM that generates findings to periodically compress them — I hadn't seen this pattern elsewhere. It works because compaction is genuinely simpler than coding. The model is merging structured text, not reasoning about logic. The 8KB threshold keeps findings well within a single prompt's useful context. After compaction, the file typically shrinks by half.
 
-Self-compacting memory is a superpower.
+Self-compacting memory keeps the file useful instead of turning it into another junk drawer.
 
 ## Shared Context: Explore Once, Use Everywhere
 
-Let's talk about token waste. When I profiled how many tokens each task consumed, the numbers were absurd. The decomposer, implementer, reviewer, and fixer were all independently exploring the codebase — reading the same files, building the same mental model, burning the same tokens. Four phases doing the same work. Four times the cost.
+When I profiled how many tokens each task consumed, the numbers were absurd. The decomposer, implementer, reviewer, and fixer were all independently exploring the codebase — reading the same files, building the same mental model, burning the same tokens. Four phases doing the same work. Four times the cost.
 
 The fix is an explicit explorer phase that runs once at session start. It produces `static.md`, a snapshot of the codebase's architecture, key files, and patterns. Every subsequent phase reads from this shared context instead of exploring on its own.
 
@@ -86,9 +86,9 @@ After all tasks complete, a postrun phase kicks in:
 3. **CI monitoring** — polls GitHub Actions for workflow status, showing a live summary of passing and failing checks
 4. **Auto-fix** — if CI fails, fetches the logs (kept in memory, never written to disk), feeds them to Claude, commits the fix, and pushes again. Up to 10 retries.
 
-The CI auto-fix loop creates a genuine feedback cycle between the test environment and the agent. The agent wrote the code. CI found a problem local tests didn't catch. The agent fixes it without human intervention. That loop — write, test, fail, learn, fix — is what turns a coding assistant into an autonomous workflow. The retry limit of 10 prevents runaway loops, and keeping CI logs in memory only avoids polluting the workspace.
+The CI auto-fix loop creates a feedback cycle between the test environment and the agent. The agent wrote the code. CI found a problem local tests didn't catch. The agent fixes it without human intervention. The retry limit of 10 prevents runaway loops, and keeping CI logs in memory only avoids polluting the workspace.
 
-## What Actually Matters
+## What Matters
 
 Memory, shared context, graceful recovery. Three patterns. None of them require clever prompting or exotic model capabilities. All of them require caring about the boring infrastructure that sits between the LLM and the actual work.
 
@@ -96,4 +96,4 @@ A stateless agent is a demo. A stateful agent is a tool. The implementation is t
 
 These aren't theoretical patterns. They're what fell out of running lgtm and snap on real projects and watching where they broke. The tools keep evolving. But the core insight — that memory, context sharing, and graceful recovery matter more than prompt engineering — has held up under every project I've thrown at it.
 
-Both tools are on GitHub: [lgtm](https://github.com/yarlson/lgtm) and [snap](https://github.com/yarlson/snap). Go build something that remembers.
+Both tools are on GitHub: [lgtm](https://github.com/yarlson/lgtm) and [snap](https://github.com/yarlson/snap).

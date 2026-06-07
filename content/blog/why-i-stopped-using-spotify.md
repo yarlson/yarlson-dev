@@ -25,7 +25,7 @@ Look, the math is simple. When every song costs you nothing extra to play, music
 
 I went from listening to albums to listening to singles. From singles to fragments. Fifteen seconds — if a track didn't hook me instantly, gone. Spotify trained me to consume music the way I scroll a feed: fast, shallow, forgettable.
 
-But here's the thing that genuinely broke me. My subscription money — the money I thought was supporting musicians I cared about — mostly flowed to whatever the recommendation engine decided I should hear that week. Artists I had no connection to. Tracks I couldn't name five minutes later.
+The part that broke me was the money. My subscription money — the money I thought was supporting musicians I cared about — mostly flowed to whatever the recommendation engine decided I should hear that week. Artists I had no connection to. Tracks I couldn't name five minutes later.
 
 That's not supporting artists. That's paying for background noise with extra steps.
 

@@ -119,6 +119,6 @@ The recommended way to use a coding agent is not a UI. It is a system prompt wit
 
 Without those, you are driving a car with no fuel and complaining about the dashboard.
 
-With them, you can hand the agent real work and get something worth reviewing.
+With them, you can hand the agent a real task and get something worth reviewing.
 
 Write the `CLAUDE.md`.

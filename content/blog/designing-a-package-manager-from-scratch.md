@@ -1,6 +1,6 @@
 ---
 title: "Designing a Package Manager When You Don't Have One"
-summary: "When the Yar compiler couldn't import code across project boundaries, I had to build a package manager from nothing. Git-based fetching, alias-based imports, content-addressed caching, transitive resolution — and zero registry. Here's every decision that mattered."
+summary: "Yar needed imports across project boundaries, so I built a small package manager: Git dependencies, alias-based imports, content-addressed caching, transitive resolution, lockfiles, and no registry."
 postLayout: simple
 date: "2026-04-05"
 tags:
@@ -12,7 +12,7 @@ Every programming language hits the same wall. You can compile programs. You can
 
 [Yar](https://github.com/yarlson/yar) hit that wall last week. The compiler could resolve imports from the local directory tree and from the embedded stdlib. That was it. Want to use someone else's code? Literally copy it into your project. Want to update it? Copy it again. Want to know what version you're running? Good luck.
 
-So I built a package manager. From scratch. In about 2,400 lines of Go. And the decisions that shaped it are more interesting than the code itself.
+So I built a package manager. From scratch. In about 2,400 lines of Go. The decisions around scope mattered more than the code volume.
 
 ## No Registry. Not Yet, Not Ever (Probably)
 
@@ -125,4 +125,4 @@ This package manager is simple. Deliberately, almost stubbornly simple. It doesn
 
 And for a language with a small ecosystem and shallow dependency trees, that's exactly the right amount of package manager. Every feature I didn't build is a feature I don't have to maintain, debug, or explain. The package manager that exists, works, and is honest about its limitations beats the package manager that handles every edge case and ships next year.
 
-Simplicity compounds. I keep saying it because I keep proving it.
+Small scope is what made this shippable.

@@ -1,21 +1,23 @@
 ---
-title: "Using Go 1.22's New Iterators in CLI Applications"
-summary: "Go 1.22 introduces built-in support for iterators, providing a memory-efficient and composable way to handle data streams. This post explains how to use these iterators in CLI applications, complete with code examples and best practices."
+title: "Using Go 1.23 Iterators in CLI Applications"
+summary: "Go 1.23 added range-over-function iterators and the iter package. For CLI progress streams, that can replace channels, goroutines, and hand-rolled state machines."
 postLayout: simple
 date: "2024-10-26"
 tags:
   - go
+aliases:
+  - /blog/using-go-1-22-iterators-in-cli-applications/
 ---
 
 Go CLI tools hit the same wall. You have a long-running task, you want to stream status updates to the terminal, and now you're staring at a channel, a goroutine, a `select` block, and a `done` signal that you will absolutely forget to close at least once. Channels are genuinely great concurrency primitives. But reaching for them when you don't actually need concurrency? That's cargo-culted complexity.
 
-Go 1.22 shipped something better for this exact problem: built-in iterator support via the `iter` package. And it is a superpower.
+Go 1.23 shipped something better for this exact problem: range-over-function iterators and the `iter` package.
 
 ### What I was building
 
 A CLI that performs a long-running task and prints status updates as it goes. Start, progress, error, done. Simple requirements. The kind of thing that shouldn't require you to think about goroutine lifecycles.
 
-Let's talk about how iterators make this trivially clean.
+Here is how iterators make this cleaner.
 
 ### Defining event types
 
@@ -104,7 +106,7 @@ Look, the `if !yield(...) { return }` pattern takes a minute to internalize. But
 
 ### Consuming it
 
-But here's the thing. The consumer side is where this pattern genuinely shines:
+The consumer side is where this pattern pays off:
 
 ```go
 func main() {
@@ -161,7 +163,7 @@ How many times have you seen a channel-based approach where someone forgot to dr
 
 ### Under the hood
 
-Go 1.22's iterator model lets the runtime manage control flow between the iterator function and the `for...range` loop. Each call to `yield` passes a value back to the loop variables and suspends the iterator until the loop body completes. Same goroutine, cooperative scheduling, no magic.
+Go 1.23's iterator model lets the runtime manage control flow between the iterator function and the `for...range` loop. Each call to `yield` passes a value back to the loop variables and suspends the iterator until the loop body completes. Same goroutine, cooperative scheduling, no hidden concurrency.
 
 This is the same pattern that Python generators and C# enumerators have used for years. But it's Go, so it compiles to a single binary and runs without a runtime interpreter. That combination of ergonomics and performance is genuinely hard to find.
 
@@ -262,6 +264,6 @@ func main() {
 }
 ```
 
-Go 1.22's iterators aren't flashy. They don't introduce new syntax or require framework buy-in. They just give you a clean, composable, zero-overhead way to stream values through a `for...range` loop. For CLI tools that need to report progress, handle errors inline, and stay readable six months later, this pattern replaces channels, callbacks, and hand-rolled state machines with something that looks like... a loop.
+Go 1.23's iterators aren't flashy. They don't require framework buy-in. They just give you a clean way to stream values through a `for...range` loop. For CLI tools that need to report progress, handle errors inline, and stay readable six months later, this pattern replaces channels, callbacks, and hand-rolled state machines with a loop.
 
-Simplicity is a superpower. Use it.
+Use the loop until you actually need concurrency.

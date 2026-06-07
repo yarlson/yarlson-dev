@@ -1,6 +1,6 @@
 ---
-title: "Lnk: Simplify Your Dotfiles with a Git-Native CLI"
-summary: "Manage your dotfiles effortlessly: Lnk uses Git to move files into ~/.config/lnk, create reliable symlinks, handle host-specific overrides, and run bootstrap scripts automatically—no more messy bash hacks."
+title: "Lnk: Dotfiles Without Another Bash Pile"
+summary: "Lnk moves dotfiles into ~/.config/lnk, leaves relative symlinks behind, supports host-specific files, and runs bootstrap scripts. Git stays the source of truth."
 postLayout: simple
 date: "2025-06-03"
 tags:
@@ -9,13 +9,13 @@ tags:
 
 Dotfiles setups all collapse into the same thing: a pile of bash scripts held together by hope and `ln -s` commands nobody remembers writing. You provision a new VM, spend thirty minutes hunting for your `.vimrc`, realize the symlink script doesn't work on macOS, fix it, break something else. Repeat forever.
 
-I got tired of the cycle. So I built Lnk.
+I got tired of the cycle, so I built Lnk.
 
 ## The Problem Is Always the Same
 
-Let's talk about what dotfile management actually looks like in practice. You start with a Git repo. You write some symlink logic. Maybe a Makefile. Then you need host-specific configs, so you add branching or environment variables or both. Then you get a new laptop and the bootstrap is manual because you forgot to script half of it. Then you switch to a tool that promises to fix everything and instead introduces YAML templating and a dependency on Ruby.
+Dotfile management usually looks like this: you start with a Git repo. You write some symlink logic. Maybe a Makefile. Then you need host-specific configs, so you add branching or environment variables or both. Then you get a new laptop and the bootstrap is manual because you forgot to script half of it. Then you switch to a tool that promises to fix everything and instead introduces YAML templating and a dependency on Ruby.
 
-But here's the thing. Dotfiles are just files. They live in known locations. They need symlinks. They need version control. They occasionally need per-machine overrides. That's it. Four requirements. Why does every solution turn this into a distributed systems problem?
+Dotfiles are just files. They live in known locations. They need symlinks. They need version control. They occasionally need per-machine overrides. That's it. Four requirements. Why does every solution turn this into a distributed systems problem?
 
 Lnk does exactly those four things:
 
@@ -24,7 +24,7 @@ Lnk does exactly those four things:
 - **Support host-specific overrides** without forcing you to juggle dozens of branches.
 - **Run bootstrap scripts** automatically when you clone or update.
 
-Git plus symlinks plus a little bootstrap magic. Simple is a superpower.
+Git plus symlinks plus a little bootstrap logic.
 
 ## What This Actually Solves
 
@@ -36,7 +36,7 @@ Git plus symlinks plus a little bootstrap magic. Simple is a superpower.
 
 **Git-native workflow.** You still use `git add`, `git commit`, `git push`. Nothing exotic. If you know Git, you already know how Lnk works.
 
-Why do so many tools promise "one-size-fits-all" and then make your life genuinely harder? Lnk cuts the fluff. One job. Done well.
+Why do so many tools promise "one-size-fits-all" and then make your life harder? Lnk cuts the fluff. One job.
 
 ## How to Install Lnk
 
@@ -57,7 +57,7 @@ brew tap yarlson/lnk
 brew install lnk
 ```
 
-Homebrew handles everything, including updates. Just `brew upgrade lnk` when you want new features.
+Homebrew handles updates too. Run `brew upgrade lnk` when you want a newer release.
 
 ### Manual Download
 
@@ -78,7 +78,7 @@ Open a terminal. Run this:
 lnk init
 ```
 
-That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk is ready. Let's talk about the actual workflow.
+That creates `~/.config/lnk` and initializes it as a Git repo. From there, Lnk is ready.
 
 ### 1. Initialize Your Dotfiles Repo
 
@@ -182,10 +182,10 @@ Executes `bootstrap.sh` inside your dotfiles repo. Packages, plugins, whatever y
 
 Look, you could clone a bare repo and write symlink scripts yourself. I've done it. Repeatedly. Every time, I ended up writing another helper that half-broke on macOS, or I forgot `git update-index --assume-unchanged` on some file, and chaos followed.
 
-Lnk eliminates that entire category of problem. It abstracts away platform-specific quirks. It keeps symlinks relative, so you can move your dotfiles folder anywhere and nothing breaks. It isolates host configs so your office workstation's secrets never bleed into your personal laptop.
+Lnk eliminates that category of problem. It handles platform-specific quirks. It keeps symlinks relative, so you can move your dotfiles folder anywhere and nothing breaks. It isolates host configs so your office workstation's secrets never bleed into your personal laptop.
 
 Someone asks "How do I sync my dotfiles?" and instead of a ten-minute explanation involving merge strategies, you say "`lnk init` on the new box." Conversation over before the coffee's done.
 
-Dotfile management doesn't need to be clever. It needs to be boring and reliable. Lnk is genuinely both. It works across Linux, macOS, WSL. It does one thing, and it does it well. That's the whole pitch.
+Dotfile management doesn't need to be clever. It needs to be boring and reliable. Lnk works across Linux, macOS, and WSL. That's the pitch.
 
 Give it a try: [github.com/yarlson/lnk](https://github.com/yarlson/lnk)

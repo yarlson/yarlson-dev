@@ -1,6 +1,6 @@
 ---
-title: "Deploying NextJS with App Router: It's Not Just for Vercel Anymore"
-summary: "Deploying a NextJS app with the App Router outside of Vercel's infrastructure is possible using Docker and Docker Compose. This setup uses Nginx for static asset serving and as a reverse proxy for the Node.js app. This post will explain the process step-by-step for those new to Docker."
+title: "Deploying NextJS App Router with Docker"
+summary: "NextJS App Router does not require Vercel. A standalone build, one Node container, one Nginx container, and Docker Compose are enough for a boring self-hosted deployment."
 postLayout: simple
 date: "2024-08-11"
 tags:
@@ -8,9 +8,11 @@ tags:
   - nextjs
 ---
 
-A few times a year someone on Twitter declares that NextJS is "locked in" to Vercel. That deploying the App Router anywhere else is some Herculean ordeal requiring blood sacrifice and a DevRel contact. Look, I get where the anxiety comes from. Vercel makes deployment a one-click affair, and the NextJS docs don't exactly shout about alternatives. But here's the thing: deploying NextJS on your own infrastructure is genuinely straightforward. A Dockerfile, an Nginx config, a compose file. That's it.
+A few times a year someone declares that NextJS is "locked in" to Vercel. App Router outside Vercel gets treated like some cursed infrastructure quest.
 
-Let's talk about what you actually need.
+It isn't. Vercel is convenient, and the NextJS docs do not exactly center the self-hosted path, but the deployment is boring: a Dockerfile, an Nginx config, and a Compose file.
+
+Here is what you actually need.
 
 ## The Building Blocks
 
@@ -36,7 +38,7 @@ const nextConfig = {
 export default nextConfig;
 ```
 
-One line. That's the difference between a bloated image and a lean one. `standalone` is a superpower.
+One line. That's the difference between copying the whole app runtime into production and shipping the files Next actually needs.
 
 ## The Dockerfile
 
@@ -96,11 +98,11 @@ Notice the `NEXT_TELEMETRY_DISABLED` flag? You're building inside a container. P
 
 The **deps** stage installs production dependencies. The **builder** stage compiles the app. The **runner** stage is the actual Node.js process — stripped down, production-only. And the **nginx** stage grabs the static assets and serves them directly, no Node.js round-trip required.
 
-Why not just let Node serve everything? Because Nginx is genuinely better at serving static files. It's been doing this for decades. Let each tool do what it's good at.
+Why not just let Node serve everything? You can. I still prefer Nginx for static files because it keeps that job out of the Node process and gives you explicit cache headers in one place.
 
 ## Configuring Nginx
 
-This is where most people overthink things. The Nginx config has one real job: serve static assets directly, proxy everything else to the NextJS upstream.
+The Nginx config has one real job: serve static assets directly, proxy everything else to the NextJS upstream.
 
 ```nginx
 user nginx;
@@ -230,6 +232,6 @@ That builds both images and starts them in the background. Done. Your NextJS app
 
 Want to update? Pull your new code, run the same command. Docker rebuilds only the layers that changed.
 
-The whole setup — multi-stage builds, Nginx for static assets, Docker Compose for orchestration — gives you a production deployment you actually control. You can put this on a $5 VPS, a bare-metal server, or behind whatever load balancer your team already runs. No vendor lock-in, no magic platform abstractions, no surprise bills when your site gets a traffic spike.
+The whole setup — multi-stage builds, Nginx for static assets, Docker Compose for orchestration — gives you a production deployment you actually control. You can put this on a $5 VPS, a bare-metal server, or behind whatever load balancer your team already runs. No vendor lock-in, no platform magic, no surprise bill because a small app got a traffic spike.
 
-NextJS without Vercel isn't some act of rebellion. It's just infrastructure. And infrastructure, when you strip away the marketing, is genuinely not that complicated. Keep it boring. Ship your app.
+NextJS without Vercel isn't an act of rebellion. It's just infrastructure. Keep it boring.

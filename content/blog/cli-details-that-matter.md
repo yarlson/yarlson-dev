@@ -18,7 +18,7 @@ I kept hitting this wall across four recent projects — [tap](https://github.co
 
 ## 1. Bracketed Paste: When Users Paste Multi-Line Text
 
-Let's talk about paste. Not typing. Paste.
+Start with paste. Not typing. Paste.
 
 I added a textarea component to tap, my Go library for interactive CLI prompts, and immediately ran into a problem I hadn't considered. A user copies three lines from their editor, hits Ctrl-V, and the terminal sends those characters one at a time — including the newlines. A newline in an interactive prompt means "submit." So the prompt fires after line one, silently swallowing the rest.
 
@@ -26,7 +26,7 @@ Your user just lost data. They don't know why.
 
 The fix is the ANSI bracketed paste protocol. You send `ESC[?2004h` to tell the terminal you understand paste events, and the terminal wraps pasted content in `ESC[200~` ... `ESC[201~` markers. Your input layer detects the markers and treats everything between them as a single atomic event instead of individual keystrokes.
 
-That's the straightforward part. But here's the thing — how do you store pasted content in a rune buffer that also needs to support cursor navigation?
+That's the straightforward part. The awkward part is storing pasted content in a rune buffer that also needs to support cursor navigation.
 
 If you insert the full pasted text inline, your cursor arithmetic breaks. Moving left by one character shouldn't mean navigating through 400 characters of pasted JSON. But you can't ignore the paste content either. It needs to render. It needs to appear in the final output.
 
@@ -124,7 +124,7 @@ os.Symlink(repoPath, targetPath)
 
 Six lines of code. The trust it preserves is immeasurable.
 
-This is the kind of bug that never shows up in testing because your test environment always has symlinks. It only appears when a real user runs the tool on a real machine for the first time. Empathy for first-run is a superpower.
+This is the kind of bug that never shows up in testing because your test environment always has symlinks. It only appears when a real user runs the tool on a real machine for the first time.
 
 ## 4. Diff Truncation: When the Input Exceeds the Context
 
@@ -167,7 +167,7 @@ The user knows what the model sees and what it doesn't. They can make an informe
 
 The truncation threshold is configurable in `.cmt.json`, so teams can tune it based on their model and typical diff sizes. But the default works well enough that most users never touch it.
 
-## The Common Thread
+## The Pattern
 
 Paste handling, a scripting DSL, safe file operations, context-aware truncation. Four different tools, four different problem domains, the same underlying pattern: a tool that works on the happy path but corrodes the moment reality shows up.
 
@@ -182,6 +182,6 @@ I've started running a checklist against every CLI tool I build:
 
 These aren't glamorous features. They don't make demos look better. They don't get mentioned in launch tweets. But they're the weight that separates a tight, earned tool from a script someone tries once and uninstalls.
 
-The real craft of CLI development isn't the feature list. It's the handful of decisions that make someone trust your tool enough to keep using it six months later.
+Good CLI development is not just the feature list. It's the handful of decisions that make someone trust your tool enough to keep using it six months later.
 
 You can find the tools on GitHub: [tap](https://github.com/yarlson/tap), [scr](https://github.com/yarlson/scr), [lnk](https://github.com/yarlson/lnk), [cmt](https://github.com/yarlson/cmt).

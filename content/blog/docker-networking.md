@@ -1,15 +1,15 @@
 ---
-title: "Docker Networking: A Guide for Developers"
-summary: "Learn the essentials of Docker networking, including container communication, DNS, aliases, port forwarding, and internal/external access. A comprehensive guide to understanding Docker networks for effective application design."
+title: "Docker Networking Without the Guesswork"
+summary: "Docker networking gets a lot easier once you separate internal ports from host port mappings. Containers talk by service name and internal port. The outside world uses the mapped port."
 postLayout: simple
 date: "2024-11-21"
 tags:
   - docker
 ---
 
-Most developers learn Docker networking the hard way. They slap `docker-compose up` on a YAML file somebody else wrote, everything works, and they move on. Then one container can't talk to another, and they spend three hours guessing at port numbers like it's a combination lock. The root cause is almost always the same: nobody told them how the network actually works underneath the abstraction.
+Most developers learn Docker networking when it breaks. They run `docker-compose up`, everything works, and they move on. Then one container can't talk to another, and suddenly everyone is guessing ports like it's a combination lock.
 
-Let's fix that.
+The root cause is usually boring: internal container traffic and host port mappings got mixed together.
 
 ---
 
@@ -17,17 +17,17 @@ Let's fix that.
 
 A Docker network is a virtual layer that wires containers together. Each container gets its own IP, its own hostname, and a direct line to every other container on the same network. Docker handles all of this quietly, which is genuinely useful — until something breaks and you're staring at `Connection refused` with no idea which port you're supposed to hit.
 
-Three properties matter:
+Three details matter:
 
 1. **Container Communication**: Containers on the same network talk to each other by IP, by name, or by alias. Docker's built-in DNS resolves the names. No `/etc/hosts` hacking required.
 2. **Port Exposure**: Nothing is exposed to the outside world by default. You have to explicitly punch a hole. This is a good default. Treat it as a feature, not an obstacle.
-3. **DNS Integration**: Name resolution inside a Docker network just works. One container calls another by name, DNS resolves it, traffic flows. Simple is a superpower.
+3. **DNS Integration**: Name resolution inside a Docker network just works. One container calls another by name, Docker resolves it, traffic flows.
 
 ---
 
 ## How Containers Actually Talk to Each Other
 
-Here's the thing most tutorials gloss over: containers on the same network communicate using **internal ports**. The port the application listens on inside the container. That's it.
+Most tutorials gloss over the part that matters: containers on the same network communicate using **internal ports**. The port the application listens on inside the container. That's it.
 
 ### Inside the Network: Internal Ports
 
@@ -75,7 +75,7 @@ The `app` container connects to the database at `db:5432`. No network aliases to
 
 ## Port Forwarding: Punching Holes to the Outside
 
-Let's talk about port forwarding. Everything above happens _inside_ the Docker network. But at some point, you need the outside world to reach a container — your browser needs to hit the web app, a monitoring tool needs to scrape metrics, whatever.
+Everything above happens _inside_ the Docker network. At some point, you need the outside world to reach a container — your browser needs to hit the web app, a monitoring tool needs to scrape metrics, whatever.
 
 That's what `-p` does.
 
@@ -173,10 +173,10 @@ Enough theory. Let's wire up a web app that talks to a database.
 
 ---
 
-## The Verdict
+## The Model
 
-Docker networking is genuinely simpler than most people think. The confusion comes from one place: conflating internal ports with external port mappings. Once you separate those two concepts, everything clicks.
+Docker networking is simpler once you stop mixing up internal ports and external port mappings.
 
 Internal ports are for containers talking to containers. Port mappings are for the outside world talking to containers. DNS handles name resolution so you never hardcode an IP. Compose automates the wiring so you rarely think about networks at all.
 
-That's the whole model. It's lean, it's earned, and it works. Go build something with it.
+That's the whole model. Most Docker networking bugs get less mysterious once you keep that split in your head.

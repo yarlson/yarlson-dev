@@ -100,7 +100,7 @@ curl http://127.0.0.1:8080/health
 
 If that works, the language has crossed a small but meaningful line.
 
-## The Interesting Part Wasn't Parsing HTTP
+## Parsing HTTP Was Not the Hard Part
 
 Parsing the request line and headers was boring. Good boring.
 
@@ -248,7 +248,7 @@ This is enough for a demo, a health endpoint, and small experiments. It is not e
 
 The hardest part of small features is keeping them small after the obvious adjacent features show up. "No auth" is not a missing feature here. It is scope control.
 
-## What This Unlocks
+## What This Changes
 
 The sample app is tiny:
 
@@ -276,6 +276,6 @@ The next work is probably not "make HTTP bigger." It is more likely:
 
 The boring path, basically.
 
-Build the smallest thing that proves the runtime can do real work. Then let actual programs tell you where the sharp edges are.
+Build the smallest thing that proves the runtime can run useful programs. Then let actual programs tell you where the sharp edges are.
 
-Sometimes the right feature is not the clever one. Sometimes it is just a tiny HTTP server that compiles to a native binary and answers `curl`.
+A tiny HTTP server that compiles to a native binary and answers `curl` is enough for now.

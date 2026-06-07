@@ -1,13 +1,13 @@
 ---
 title: "Why I Migrated from VitePress to Hugo for This Blog"
-summary: "After running my blog on VitePress for over a year, I decided to migrate to Hugo with a custom theme. Here's why I made the switch and what I learned in the process."
+summary: "I moved this blog from VitePress to Hugo because it is mostly text. The old setup shipped too much JavaScript for pages that should just load."
 postLayout: simple
 date: "2025-08-16"
 ---
 
 ---
 
-I shipped JavaScript to render paragraphs. For a year. Let that sink in.
+I shipped JavaScript to render paragraphs for a year.
 
 VitePress ran this blog for fourteen months, and it ran it well. This is not a hit piece. VitePress is genuinely excellent software, and if you're building docs with interactive examples, stop reading and go use it. But at some point I looked at my site — a pile of articles, no state, no interactivity, nothing that needs a framework — and asked a question I should have asked sooner: why is there a JavaScript runtime between my words and the browser?
 
@@ -15,7 +15,7 @@ So I moved to Hugo. Built a custom theme. The whole thing took a weekend. Here's
 
 ## What VitePress gets right
 
-Let's talk about the good parts, because they're real.
+The good parts are real.
 
 Vite's hot reload is the gold standard for dev loops. It's fast enough that you forget it exists, which is the entire point. Writing technical posts felt frictionless — syntax highlighting, containers, Markdown niceties all there out of the box. And when you need a little interactivity, dropping a Vue component directly into Markdown is a genuinely nice escape hatch.
 
@@ -59,7 +59,7 @@ Hugo outputs plain HTML and CSS. Period. If JavaScript shows up, it's because yo
 
 That alone changes everything. Pages load immediately. There is no hydration step. The mental model is dead simple: browser gets HTML, browser renders HTML. No framework boot sequence. No client-side routing. Just a document.
 
-Simplicity is a superpower.
+That simplicity is the point.
 
 ### Templates you can read
 
@@ -122,13 +122,13 @@ Read those bundle numbers again. From 150KB to 12KB. For the same content. The o
 
 ## What I miss
 
-Vite's HMR. Genuinely. Hugo's live reload is fast, but it's not the same seamless, surgical update that Vite does. That's still the best dev experience in the ecosystem.
+Vite's HMR. Genuinely. Hugo's live reload is fast, but it is not the same surgical update that Vite does. That's still the best dev experience in the ecosystem.
 
-Some of VitePress's Markdown niceties are also hard to give up. Hugo's Markdown is solid but more basic, so I recreated a few conveniences with shortcodes and render hooks. More deliberate, less magic. That's a trade-off I'm fine with, but it is a trade-off.
+Some of VitePress's Markdown niceties are also hard to give up. Hugo's Markdown is solid but more basic, so I recreated a few conveniences with shortcodes and render hooks. More deliberate, less hidden behavior. That's a trade-off I'm fine with, but it is a trade-off.
 
-## The thesis
+## The Point
 
-Here's the thing. I had built a blog on top of a web-app stack, and I didn't actually want a web app. The moment I said that out loud, the decision was already made.
+I had built a blog on top of a web-app stack, and I didn't actually want a web app. The moment I said that out loud, the decision was already made.
 
 VitePress is the right tool for docs sites, component-driven content, anything where interactivity is the point. For a straightforward technical blog? Hugo's approach is calmer. Fewer dependencies. Fewer runtime costs. Templates you can read without a framework mental model.
 

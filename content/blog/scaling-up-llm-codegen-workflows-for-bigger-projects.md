@@ -1,6 +1,6 @@
 ---
-title: "Scaling Up LLM Codegen Workflows for Bigger Projects"
-summary: "A refined, step-by-step process for managing larger projects with LLM codegen workflows—response to Harper Reed's blog post."
+title: "Scaling LLM Codegen Past the One-Shot Demo"
+summary: "One prompt works for small hacks. Larger projects need product context, technical constraints, module boundaries, sprint-sized slices, and tight test loops."
 postLayout: simple
 date: "2025-04-08"
 tags:
@@ -11,11 +11,11 @@ _Response to [Harper Reed's blog post](https://harper.blog/2025/02/16/my-llm-cod
 
 ---
 
-Harper Reed wrote a genuinely useful post about using LLMs to generate code. One prompt, one shot, ship it. And for a weekend hack or a single-file utility? That workflow is a superpower.
+Harper Reed wrote a useful post about using LLMs to generate code. One prompt, one shot, working code. For a weekend hack or a single-file utility, that works.
 
-But here's the thing. Projects grow. What started as a clean little prototype sprouts authentication, then a second data store, then an API contract someone else depends on. Suddenly you're stuffing an entire system's worth of context into a single prompt and wondering why the LLM is hallucinating import paths.
+Projects grow. What started as a clean little prototype sprouts authentication, then a second data store, then an API contract someone else depends on. Suddenly you're stuffing an entire system's worth of context into a single prompt and wondering why the LLM is hallucinating import paths.
 
-The fix isn't magic. It's the same thing that fixes every scaling problem in software: decomposition, clear specs, and small verifiable steps. What follows is a process that builds on Harper's foundation and stretches it to projects that actually have moving parts.
+The fix isn't magic. It's the same thing that fixes most scaling problems in software: decomposition, clear specs, and small verifiable steps. This is the version I use when the project has moving parts.
 
 ---
 
@@ -28,7 +28,7 @@ Most people skip straight to code. That's backwards. You need to interrogate the
 The trick is forcing the LLM into one-question-at-a-time mode. Let it build context incrementally instead of vomiting a wall of assumptions.
 
 ```markdown
-Ask me one question at a time to explore and uncover every aspect of the product idea. Focus solely on product characteristics such as target audience, features, value propositions, market positioning, and user benefits. Each question should build on my previous answers so that we gradually develop a complete picture of the product concept. Let's take this one step at a time—only one question per turn—until we have a comprehensive understanding of the product.
+Ask me one question at a time about the product idea. Focus only on the product: audience, core features, positioning, user scenarios, and constraints. Each question should build on my previous answer. Keep going one question per turn until the product shape is clear enough to write down.
 ```
 
 One question per turn sounds slow. It's not. It's the fastest way to avoid building something nobody wants.
@@ -40,7 +40,7 @@ One question per turn sounds slow. It's not. It's the fastest way to avoid build
 Raw conversation is useless as a reference document. You need to crystallize it into something a developer—or another LLM session—can actually work from.
 
 ```markdown
-Based on our conversation about the product, please transform my answers into a detailed product specification. Organize the information into clear sections that cover product features, target market, user scenarios, and any relevant business requirements. Ensure that the output reads as a coherent and complete specification that can be handed off to stakeholders or a development team, focusing exclusively on the product aspects.
+Turn our product discussion into a product specification. Organize it into clear sections for audience, core workflows, features, constraints, non-goals, and open questions. Keep it focused on what the product should do, not how it will be built.
 ```
 
 This spec becomes the single source of truth. Every subsequent prompt points back to it. No spec, no alignment. No alignment, no working software.
@@ -52,7 +52,7 @@ This spec becomes the single source of truth. Every subsequent prompt points bac
 Now flip the lens. Same one-at-a-time interrogation, but focused entirely on how this thing gets built. Architecture, stack choices, integration points, security constraints, the sharp edges you'll cut yourself on later if you ignore them now.
 
 ```markdown
-Ask me one question at a time to gather detailed information regarding the technical implementation of the product. Focus on aspects such as architecture, technology stacks, integration points, performance considerations, scalability, security, and any constraints or requirements from a technical perspective. Each question should build on my previous answers to progressively uncover a full picture of how the product will be built. Let's work iteratively—one question at a time—until we have all the technical details needed.
+Ask me one question at a time about the technical implementation. Focus on architecture, stack choices, data model, integrations, deployment, security, performance, and hard constraints. Build on my previous answers. Keep going until the technical shape is specific enough to plan.
 ```
 
 Why separate this from the product pass? Because mixing "what should it do" with "how should it work" is how you end up with a spec that's neither useful to a PM nor a developer. Keep the concerns apart.
@@ -64,10 +64,10 @@ Why separate this from the product pass? Because mixing "what should it do" with
 Same transformation as before, but for the technical side. Architecture diagrams, data flows, integration methods, constraints—everything a developer needs to start writing code without guessing.
 
 ```markdown
-Based on our technical discussion, transform my answers into a detailed technical specification document. The output should include clear sections covering system architecture, technology choices, data flows, integration methods, and any necessary technical constraints or requirements. Ensure that the information is organized logically and can serve as a comprehensive guide for developers responsible for implementing the product. The focus should be solely on the technical details.
+Turn our technical discussion into a technical specification. Include architecture, technology choices, data flows, APIs or integrations, operational constraints, testing strategy, and open risks. Keep it concrete enough that a developer can start implementation without guessing.
 ```
 
-Look, a technical spec that lives outside the LLM's ephemeral context window is genuinely powerful. You can feed pieces of it into future sessions. You can hand it to a human. You can diff it when requirements shift. It's a artifact that compounds in value.
+A technical spec that lives outside the LLM's context window is useful. You can feed pieces of it into future sessions. You can hand it to a human. You can diff it when requirements shift. It becomes an artifact instead of another evaporating chat.
 
 ---
 
@@ -78,17 +78,17 @@ Here's where this diverges hard from the single-prompt approach. You take that m
 Why does this matter? Because LLMs work better with focused context. Feed them one module's worth of requirements instead of an entire system's, and the output quality jumps dramatically.
 
 ```markdown
-We have a comprehensive product specification that covers all aspects of the idea. Please divide this complete specification into discrete modules or components. Each module should represent a self-contained section of the product with minimal dependencies on other modules. For every module, include the following:
+We have a product specification. Divide it into discrete modules or components. Each module should have a clear boundary, limited dependencies, and enough context to be implemented on its own. For every module, include:
 
 - Module Name/Identifier: A clear, concise title for the module.
 - Module Scope: A brief description of what functionality or aspect the module covers.
 - Key Features and Requirements: List the primary features, user interactions, and any relevant technical requirements specific to the module.
 - Dependencies: Identify any cross-module dependencies (if applicable) or integration points.
 
-The goal is to ensure that when working on any particular module, only the relevant details are in the context—making development more efficient and focused. Once modularization is complete, we can later use these modules to plan and estimate development tasks independently.
+The goal is to make each module small enough to fit into an LLM session without dragging the whole product along. After this, we should be able to plan and estimate work module by module.
 ```
 
-Isolation is a superpower. For humans, for microservices, and especially for LLM context windows.
+Isolation matters for humans, services, and LLM context windows.
 
 ---
 
@@ -97,7 +97,7 @@ Isolation is a superpower. For humans, for microservices, and especially for LLM
 Modules give you the what. Sprints give you the when and how much. Each sprint should deliver a vertical slice—something that works end to end, from interface down to storage. Not a "we built the database layer" sprint. A "users can actually do the thing" sprint.
 
 ```markdown
-We have a comprehensive product specification that has been divided into discrete modules or components. Each module is a self-contained part of the product with minimal cross-dependencies. Now, please break down the overall project into manageable and estimatable sprints by leveraging these modules.
+We have a product specification divided into modules. Break the project into manageable, estimatable sprints using those modules.
 
 For each sprint, ensure that:
 
@@ -121,7 +121,7 @@ Long LLM conversations drift. Context windows fill up. The model starts forgetti
 Please generate a concise summary of our conversation so far, focusing on the key points, decisions, and information exchanged. Once the summary is complete, continue with the conversation as if nothing interrupted our flow—using the summary to inform subsequent questions and responses. The goal is to ensure continuity while keeping the context clear and current.
 ```
 
-Think of it as garbage collection for your conversation. Compress what matters, discard what doesn't, keep moving.
+Think of it as garbage collection for the conversation. Keep the decisions, drop the noise, move on.
 
 ---
 
@@ -151,6 +151,4 @@ The one-iteration-per-response constraint is doing heavy lifting here. It preven
 
 So what's actually happening across these eight steps? You're doing what good engineering has always demanded: understanding the problem before solving it, breaking big things into small things, and verifying each piece before moving to the next. The LLM doesn't change the fundamentals. It just makes the cost of each step low enough that there's no excuse to skip them.
 
-Harper's workflow is the right starting point. But structure is what carries you from prototype to product. Decompose, specify, isolate, verify. That's the whole game.
-
-Now go build something worth maintaining.
+Harper's workflow is the right starting point. Structure is what carries you past the prototype. Decompose, specify, isolate, verify. Then keep the loop small enough that you can still inspect what came out.

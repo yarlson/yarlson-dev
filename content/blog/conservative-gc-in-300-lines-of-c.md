@@ -1,6 +1,6 @@
 ---
 title: "Conservative Garbage Collection in 300 Lines of C"
-summary: "Implementing a garbage collector for the Yar compiler meant scanning the stack without knowing what's a pointer. Mark-and-sweep, conservative scanning via setjmp, heap growth targeting, and the fun part: making it work when threads are running."
+summary: "Implementing a garbage collector for the Yar compiler meant conservative stack scanning, mark-and-sweep, setjmp for registers, heap growth targets, and one ugly thread-safety constraint."
 postLayout: simple
 date: "2026-04-05"
 tags:
@@ -12,7 +12,7 @@ The [Yar compiler](https://github.com/yarlson/yar) allocates heap memory for poi
 
 For a compiler that runs, produces an executable, and quits, this was fine. Technically. The OS reclaims everything on exit anyway. But the moment Yar started supporting longer-running programs — a TCP server that accepts connections, a test runner that executes dozens of test functions — the "just leak everything" strategy went from "technically fine" to "your test suite uses 400MB for reasons nobody can explain."
 
-So I wrote a garbage collector. Conservative, non-moving, mark-and-sweep. About 300 lines of C embedded in the runtime. And the most interesting part wasn't the algorithm — it was the constraints.
+So I wrote a garbage collector. Conservative, non-moving, mark-and-sweep. About 300 lines of C embedded in the runtime. The algorithm was the easy part. The constraints were the work.
 
 ## What "Conservative" Means and Why It Matters
 
@@ -159,4 +159,4 @@ And here's what building it taught me: the gap between "no GC" and "a simple GC"
 
 Three hundred lines. Mark and sweep. Conservative scanning with `setjmp`. A heap target that tracks your live set. A mutex and a suppression flag for threads. That's a garbage collector. Not the world's best garbage collector. But a garbage collector that works, that's correct, and that turned "programs leak memory until they die" into "programs manage memory automatically."
 
-Sometimes the boring solution is the right one. And sometimes 300 lines of C is all the runtime you need.
+For now, 300 lines of C is enough runtime.

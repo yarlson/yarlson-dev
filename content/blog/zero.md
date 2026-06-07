@@ -1,6 +1,6 @@
 ---
-title: "Why I Created Zero: A Lightweight SSL Certificate Manager"
-summary: "In the world of web development, securing your applications with SSL/TLS certificates is non-negotiable. However, managing SSL certificates can be a daunting task, especially when you're dealing with multiple domains, renewals, and the complexities of the ACME protocol. This is why I created Zero, a lightweight SSL certificate manager designed to simplify the process of obtaining, renewing, and managing SSL/TLS certificates."
+title: "Zero: A Small SSL Certificate Manager"
+summary: "SSL certificates should be boring. Zero is a small Go binary that handles ACME challenges, renews certificates, writes them to a shared volume, and reloads Nginx."
 postLayout: simple
 date: "2025-01-27"
 tags:
@@ -32,7 +32,7 @@ It does four things:
 3. Checks certificates daily and renews them 30 days before expiry
 4. Executes a post-renewal hook — like reloading Nginx in a sibling container
 
-That's it. Simplicity is a superpower.
+That's it.
 
 ## Docker Compose, the real-world version
 
@@ -78,7 +78,7 @@ Zero gets the cert, writes it to a shared volume, reloads Nginx. Nginx serves HT
 
 ## 1.2 MiB
 
-Let's talk about resource usage. Here's `docker stats` from a real deployment:
+Here is `docker stats` from a real deployment:
 
 ```bash
 aerie@pdg:~$ docker stats --no-stream
@@ -119,12 +119,12 @@ dependencies:
   - "postgres:16"
 ```
 
-No SSL section. No certificate flags. FTL reads the domain and email, Zero handles the rest. Certificates appear, renewals happen, Nginx reloads — all invisible. That's the whole point.
+No SSL section. No certificate flags. FTL reads the domain and email, Zero handles the rest. Certificates appear, renewals happen, Nginx reloads. That's the whole point.
 
-## The thesis
+## The Point
 
 Look, SSL certificate management is a solved problem that the existing tools insist on making unsolved. Certbot is too heavy. Traefik is too much. Caddy is the wrong shape if you already have a web server.
 
-Zero does one thing well: it gets your certs, renews your certs, and stays out of your way. A single Go binary, a couple megabytes of RAM, zero ongoing attention required.
+Zero does one thing: it gets your certs, renews your certs, and stays out of your way. A single Go binary, a couple megabytes of RAM, zero ongoing attention required.
 
-Sometimes the best tool is the one you stop thinking about the moment you deploy it.
+The best version of certificate management is the one you stop thinking about after deploy.

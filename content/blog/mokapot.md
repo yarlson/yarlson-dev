@@ -15,12 +15,12 @@ So I built [mokapot](https://github.com/yarlson/mokapot): a single Go binary tha
 
 ## What "Well Enough" Actually Means
 
-Let's talk about scope. The goal was never feature parity with AWS. Feature parity is a trap. The goal was protocol compliance with the operations that matter for development and testing:
+The goal was never feature parity with AWS. Feature parity is a trap. The goal was protocol compliance with the operations that matter for development and testing:
 
 - **SQS**: create/delete/list queues, send/receive/delete messages, long polling, visibility timeouts, delay queues, dead-letter queues with redrive, batch operations, message attributes, purge with cooldown
 - **SNS**: create/delete/list topics, subscribe/unsubscribe, publish with fanout to SQS, raw message delivery, subscription attributes, filter policies
 
-But here's the thing most mock authors miss: mokapot speaks both the AWS Query/XML and JSON 1.0 protocols. Why does this matter? Because the Go SDK v2 uses JSON while older SDKs use Query strings. Implement only one and half your team's tests break silently. Not with loud failures. With subtle serialization mismatches that waste an afternoon.
+Most mock authors miss this: mokapot speaks both the AWS Query/XML and JSON 1.0 protocols. The Go SDK v2 uses JSON while older SDKs use Query strings. Implement only one and half your team's tests break silently. Not with loud failures. With subtle serialization mismatches that waste an afternoon.
 
 ## The Persistence Problem
 
@@ -49,7 +49,7 @@ func (app *App) saveState() error {
 
 The `Lock()`/`Unlock()`/`SnapshotLocked()` methods exist specifically for atomic cross-engine snapshots. Each engine already had internal locking for concurrent request handling. The public lock methods expose a higher-level coordination point that the persistence layer uses. Two locks. One transaction. Consistent state.
 
-The BoltStore abstraction itself is deliberately dumb — two named buckets, each holding a single JSON blob. It knows nothing about SQS or SNS. This means the same pattern works for any pair of interdependent state machines that need atomic persistence. Boring infrastructure is a superpower.
+The BoltStore abstraction itself is deliberately dumb — two named buckets, each holding a single JSON blob. It knows nothing about SQS or SNS. This means the same pattern works for any pair of interdependent state machines that need atomic persistence.
 
 ## Filter Policies: Where the Complexity Hides
 
@@ -73,7 +73,7 @@ type condition struct {
 
 Policies are parsed eagerly when `SetSubscriptionAttributes` is called — invalid policies fail fast rather than silently misbehaving at publish time. Each `Publish` call evaluates the parsed policy against message attributes. The file is 308 lines of Go with 384 lines of tests. More test than implementation. That ratio feels exactly right for something that needs to match AWS behavior down to the edge cases.
 
-Keeping this as an isolated file paid off immediately. When I found numeric comparison bugs, I could fix and test them without touching the SNS engine at all. Isolation is a superpower.
+Keeping this as an isolated file paid off immediately. When I found numeric comparison bugs, I could fix and test them without touching the SNS engine at all.
 
 ## Proving Compliance the Hard Way
 
@@ -107,6 +107,6 @@ Use LocalStack when you need the broader AWS surface area — S3, DynamoDB, Lamb
 
 For my own projects, mokapot replaced a LocalStack Docker Compose setup that took thirty seconds to start and occasionally crashed. The single binary starts instantly and hasn't lost state once since persistence landed.
 
-A 6MB Go binary that boots in 50 milliseconds, speaks two wire protocols, survives restarts, and passes the same integration suites as actual AWS. Sometimes the best infrastructure is the kind you forget is running.
+A 6MB Go binary that boots in 50 milliseconds, speaks two wire protocols, survives restarts, and passes the same integration suites as actual AWS. That is enough for the local SQS/SNS use case.
 
 Mokapot is on GitHub: [https://github.com/yarlson/mokapot](https://github.com/yarlson/mokapot). Install with Homebrew (`brew install yarlson/tap/mokapot`) or grab the binary from the releases page.
