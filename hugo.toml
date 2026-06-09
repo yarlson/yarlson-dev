@@ -37,8 +37,8 @@ summaryLength = 35
 
 [markup]
   [markup.highlight]
-    style = 'dracula'
+    style = 'bw'
     guessSyntax = true
     lineNos = false
-    noClasses = false
+    noClasses = true
     tabWidth = 2

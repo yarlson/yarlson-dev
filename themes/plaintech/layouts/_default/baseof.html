@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light dark" />
+  <meta name="color-scheme" content="light" />
   <title>{{ block "title" . }}{{ if .IsHome }}{{ site.Title }} | Backend systems, agents, and infrastructure{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}{{ end }}</title>
 
   {{/* Build a robust meta description: page.description → page.summary → page summary → site param */}}
@@ -26,7 +26,7 @@
   {{ with site.Params.keywords }}<meta name="keywords" content="{{ delimit . ", " }}" />{{ end }}
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   {{ with resources.Get "yar.jpg" }}<link rel="icon" type="image/jpeg" href="{{ .RelPermalink }}" />{{ end }}
-  <link rel="stylesheet" href="{{ "/css/plaintech.css" | relURL }}" />
+  {{ partial "style.html" . }}
   <link rel="alternate" type="application/rss+xml" title="{{ site.Title }} RSS" href="{{ "index.xml" | absURL }}" />
   {{/* Canonical URL */}}
   {{ if .Params.canonical }}
@@ -36,12 +36,11 @@
   {{ end }}
   {{ partial "opengraph.html" . }}
   {{ partial "schema.html" . }}
-  <script defer src="{{ "/js/copycode.js" | relURL }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#content">Skip to content</a>
   {{ partial "header.html" . }}
-  <main id="content" class="container" role="main">
+  <main id="content">
     {{ block "main" . }}{{ end }}
   </main>
   {{ partial "footer.html" . }}

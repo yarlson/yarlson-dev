@@ -1,16 +1,13 @@
-<footer class="site-footer" role="contentinfo">
-  <div class="container footer-inner">
-    <p>
-      {{ site.Title }} · {{ now.Year }} · built with Hugo · writing about
-      backend systems, agents, infrastructure, CLI tools, and production
-      details.
-    </p>
-    {{ with site.Params.social }}
-    <ul class="social">
-      {{ range . }}
-      <li><a href="{{ .url }}">{{ .name }}</a></li>
-      {{ end }}
-    </ul>
+<footer>
+  <p>
+    {{ site.Title }} · {{ now.Year }} · backend systems, agents,
+    infrastructure, CLI tools, and production details.
+  </p>
+  {{ with site.Params.social }}
+  <ul class="social">
+    {{ range . }}
+    <li><a href="{{ .url }}">{{ .name }}</a></li>
     {{ end }}
-  </div>
+  </ul>
+  {{ end }}
 </footer>

@@ -2,39 +2,36 @@
 
 ## Architecture
 
-Single CSS file (`plaintech.css`) with no preprocessor. All theming via CSS custom properties.
+Tiny embedded stylesheet in `partials/style.html`, with no preprocessor and
+almost no theming.
 
 ## Color System
 
-Two token sets in `:root` — light (default) and dark (`prefers-color-scheme: dark`):
-
-- `--bg`, `--fg` — page background/foreground
-- `--muted` — secondary text
-- `--link`, `--link-visited` — link colors
-- `--card`, `--border` — card surface and borders
-- `--accent` — focus rings, active states
-- `--code-bg` — code block background
-
-Dark mode uses `color-mix(in oklab, ...)` for semi-transparent overlays.
+- White page background
+- Black text
+- Browser-default link colors
+- No dark mode and no color tokens
 
 ## Typography
 
-- System font stack via `--font-sans` and `--font-mono`
-- Fluid sizing with `clamp()` on body, h1-h3, site title, about name
-- Body line-height: 1.7; headings: 1.25
-- `text-wrap: pretty` on post content paragraphs
-- Content column: `max-width: 70ch`
+- Native OS sans-serif body font
+- Browser-default monospace code font
+- Body line-height: 1.6
+- Content column: `max-width: 42rem`
 
-## Key Components
+## Rules Kept
 
-- **`.post-card`** — card with bg, border, rounded corners, flex column layout
-- **`.code-block`** — relative wrapper; copy button absolutely positioned, hidden until hover/focus
-- **`.about-hero`** — CSS grid: sidebar (avatar + identity) / main (bio), collapses on narrow viewports
-- **`.site-header`** — sticky, backdrop-filter blur, semi-transparent background
-- **`.tag`** — pill-shaped inline element with border
+- `body` centers the reading column and sets the measure
+- `nav ul`, `.post-list`, `.latest-list`, `.pagination`, `.social`, and
+  `.links` remove list markers
+- `pre` scrolls horizontally instead of breaking the layout and uses a light
+  background with a thin black border
+- `img` scales down responsively
+- `table`, `th`, and `td` get basic borders
+- `blockquote` gets a simple left rule
+- `.skip-link` is hidden until focused
 
 ## Accessibility
 
-- `.skip-link` visually hidden, revealed on focus
-- `focus-visible` outlines using `--accent` on links and copy button
-- Touch devices: copy button always visible (`@media (hover: none)`)
+- Browser default focus indicators are preserved
+- The skip link is available on every page

@@ -4,20 +4,20 @@
 {{ $paginator := .Paginate $allPosts }}
 
 {{ if eq $paginator.PageNumber 1 }}
-<p class="site-tagline">I write about backend systems, coding agents, infrastructure, CLI tools, and the boring details that decide whether software works in production.</p>
+<p>I write about backend systems, coding agents, infrastructure, CLI tools, and the boring details that decide whether software works in production.</p>
 {{ end }}
 <section aria-labelledby="home-title">
-  <h2 id="home-title" class="section-label">Latest writing</h2>
+  <h2 id="home-title">Latest writing</h2>
   <ul class="post-list" role="list">
     {{ range $paginator.Pages }}
     <li>
-      <article class="post-card">
-        <h2 class="post-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
-        <p class="muted">
+      <article>
+        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        <p>
           <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>
-          {{ with .Params.tags }}· {{ range $i, $t := . }}{{ if $i }}, {{ end }}<a class="tag" href="{{ (site.GetPage (printf "/tags/%s" $t)).RelPermalink }}">{{ $t }}</a>{{ end }}{{ end }}
+          {{ with .Params.tags }}· {{ range $i, $t := . }}{{ if $i }}, {{ end }}<a href="{{ (site.GetPage (printf "/tags/%s" $t)).RelPermalink }}">{{ $t }}</a>{{ end }}{{ end }}
         </p>
-        {{ with .Summary }}<p class="summary">{{ . }}</p>{{ end }}
+        {{ with .Summary }}<p>{{ . }}</p>{{ end }}
       </article>
     </li>
     {{ end }}

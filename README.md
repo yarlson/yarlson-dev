@@ -1,6 +1,7 @@
 # Yar Kravtsov's Blog
 
-A Hugo-based technical blog with the custom **Plain Tech** theme, featuring minimal design, automatic dark/light mode, and semantic HTML5.
+A Hugo-based technical blog with the custom **Plain Tech** theme, plain HTML5,
+minimal CSS, and SEO metadata.
 
 ## Configuration
 
@@ -9,31 +10,27 @@ A Hugo-based technical blog with the custom **Plain Tech** theme, featuring mini
 ```toml
 baseURL = 'https://yarlson.dev/'
 languageCode = 'en-us'
-title = "Yar Kravtsov's Blog"
+title = "Yar Kravtsov"
 theme = 'plaintech'
 
 [markup]
   [markup.highlight]
-    style = 'dracula'
+    style = 'bw'
     guessSyntax = true
     lineNos = false
     noClasses = true
     tabWidth = 2
 ```
 
-### Theme Configuration
+### Theme Parameters
 
-The Plain Tech theme supports the following configuration parameters:
-
-#### Site Parameters
-
-- `avatar`: Path to avatar image (can be overridden per page)
 - `description`: Site meta description
 - `author`: Site author name
+- `keywords`: Site-level SEO keywords
+- `github`, `linkedin`, `twitter`: Profile links for structured data
 
-#### Page Parameters
+Page parameters:
 
-- `avatar`: Override site avatar for specific pages
 - `description`: Page-specific meta description
 - `canonical`: Custom canonical URL
 - `thumbnail`: Page thumbnail for OpenGraph images
@@ -43,222 +40,73 @@ The Plain Tech theme supports the following configuration parameters:
 
 ### Directory Structure
 
-```
+```text
 themes/plaintech/
 ├── layouts/
 │   ├── _default/
 │   │   ├── _markup/
-│   │   │   ├── render-codeblock.html  # Custom code block rendering
-│   │   │   └── render-image.html      # Image path normalization
-│   │   ├── baseof.html               # Base template
-│   │   ├── list.html                 # List page template
-│   │   └── single.html               # Single page template
+│   │   │   ├── render-codeblock.html
+│   │   │   └── render-image.html
+│   │   ├── baseof.html
+│   │   ├── list.html
+│   │   └── single.html
 │   ├── about/
-│   │   └── single.html               # About page template
-│   ├── index.html                    # Homepage template
+│   │   └── single.html
+│   ├── index.html
 │   ├── partials/
 │   │   ├── footer.html
 │   │   ├── header.html
-│   │   └── opengraph.html            # Dynamic OpenGraph image generation
+│   │   ├── opengraph.html
+│   │   ├── schema.html
+│   │   └── style.html
 │   └── tags/
-│       ├── list.html                 # Tags listing page
-│       └── single.html               # Individual tag page
-├── static/
-│   ├── css/
-│   │   └── plaintech.css             # Main stylesheet
-│   └── js/
-│       └── copycode.js               # Code block copy functionality
-└── theme.toml                        # Theme metadata
+│       ├── list.html
+│       └── single.html
+└── theme.toml
 ```
 
-### Key Theme Features
+### Design
 
-#### 1. CSS Custom Properties
+- Black text on white background
+- Browser-default blue links
+- Native sans-serif body font from the user's OS/browser
+- Centered `42rem` reading column
+- CSS only for readable layout, responsive images, code overflow, tables,
+  blockquotes, and the skip link
+- CSS is embedded in the document head
+- No JavaScript
 
-The theme uses CSS custom properties for theming with automatic dark/light mode:
+### SEO
 
-```css
-:root {
-  --bg: #ffffff;
-  --fg: #0b0c0d;
-  --muted: #4b5563;
-  --link: #0b5fff;
-  --card: #f3f4f6;
-  --border: #d1d5db;
-  --accent: #0077ff;
-  --code-bg: #f1f5f9;
-}
+The base template preserves:
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0c10;
-    --fg: #e7eaf0;
-    /* ... other dark mode colors */
-  }
-}
-```
+- Meta description cascade: page `description` > page `summary` > generated
+  page summary > site description
+- Canonical URL, overridable with page `canonical`
+- RSS link
+- OpenGraph and Twitter card tags
+- Generated OpenGraph images from `assets/og_base.png`
+- Schema.org JSON-LD for the blog, posts, and profile page
 
-#### 2. System Font Stack
+### Render Hooks
 
-Uses system fonts for optimal performance:
+- `render-codeblock.html`: renders Hugo/Chroma-highlighted fenced code blocks
+  directly, without wrappers or copy buttons
+- `render-image.html`: normalizes relative Markdown image paths to the current
+  content section and emits semantic `<figure>` markup
 
-```css
---font-sans:
-  -apple-system, system-ui, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans",
-  "Helvetica Neue", Arial, sans-serif;
---font-mono:
-  ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-  "DejaVu Sans Mono", monospace;
-```
+## Content
 
-#### 3. Dynamic OpenGraph Image Generation
+- `content/blog/`: Blog posts
+- `content/tags/`: Tag pages with descriptions
+- `content/about.md`: About page
 
-The theme generates OpenGraph images dynamically using Hugo's image processing:
-
-- Base image: `assets/og_base.png` (1200x630)
-- Overlays page title and site title
-- Optional thumbnail overlay from `thumbnail` parameter
-- Automatic generation for all pages
-
-#### 4. Code Block Enhancement
-
-Custom render hooks provide enhanced code blocks:
-
-- Copy-to-clipboard functionality
-- Syntax highlighting with Chroma
-- Language detection
-- Responsive design
-
-#### 5. Image Path Normalization
-
-Custom image render hook normalizes relative paths:
-
-```go
-// Converts ./images/foo.jpg to /blog/images/foo.jpg
-// Based on page section
-```
-
-### Layout Templates
-
-#### Base Template (`baseof.html`)
-
-- Semantic HTML5 structure
-- Meta tag generation
-- Accessibility features (skip links, ARIA labels)
-- Progressive enhancement approach
-
-#### Header Partial (`header.html`)
-
-- Avatar resolution (page > site params)
-- Sticky navigation
-- Responsive design
-
-#### Homepage (`index.html`)
-
-- Latest 12 posts from blog/post sections
-- Card-based layout
-- Tag integration
-
-#### Single Page (`single.html`)
-
-- Schema.org microdata
-- Reading time estimation
-- Tag navigation
-
-### CSS Architecture
-
-#### Layout System
-
-- Container-based layout (70ch max-width)
-- CSS Grid for complex layouts (about page)
-- Flexbox for navigation and cards
-
-#### Typography
-
-- Fluid typography using `clamp()`
-- Optimized line-height (1.7)
-- Text rendering optimizations
-
-#### Component Patterns
-
-- `.post-card`: Reusable card component
-- `.code-block`: Enhanced code blocks
-- `.tag`: Inline tag styling
-- `.muted`: Secondary text styling
-
-### JavaScript Enhancement
-
-#### Progressive Enhancement
-
-- Clipboard API feature detection
-- Graceful fallbacks
-- No JavaScript dependencies
-- Minimal bundle size
-
-#### Copy Code Functionality
-
-- Event delegation
-- Accessibility improvements
-- Visual feedback
-- Error handling
-
-### Content Organization
-
-#### Content Types
-
-- `blog/`: Blog posts
-- `tags/`: Tag pages with descriptions
-- `about.md`: About page with special layout
-
-#### Front Matter Schema
+Standard post front matter:
 
 ```yaml
-# Standard post
 title: "Post Title"
 date: 2025-01-01
 tags: ["go", "docker"]
 description: "Optional meta description"
-thumbnail: "images/thumb.jpg"  # Optional OG thumbnail
-
-# About page
-title: "About"
-type: "about"
-name: "Full Name"
-avatar: "/assets/avatar.jpg"
-occupation: "Job Title"
-company: "Company Name"
-email: "email@domain.com"
-twitter: "https://x.com/username"
-linkedin: "https://linkedin.com/in/username"
-github: "https://github.com/username"
-```
-
-### Performance Optimizations
-
-- System fonts (no web font loading)
-- Minimal CSS (no framework dependencies)
-- Progressive image loading (`loading="lazy"`)
-- Optimized image processing
-- Zero JavaScript for core functionality
-
-### Accessibility Features
-
-- Semantic HTML5 elements
-- ARIA labels and roles
-- Skip navigation links
-- Keyboard navigation support
-- Screen reader optimizations
-- Color contrast compliance
-
-### Development Commands
-
-```bash
-# Local development
-hugo server -D
-
-# Build for production
-hugo
-
-# Theme development
-hugo server --themesDir themes --theme plaintech
+thumbnail: "images/thumb.jpg"
 ```

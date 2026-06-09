@@ -9,5 +9,4 @@
 ## Theme
 
 - [Layouts](theme/layouts.md) — Hugo templates and render hooks
-- [Styling](theme/styling.md) — CSS architecture and design tokens
-- [JavaScript](theme/javascript.md) — copy-to-clipboard behavior
+- [Styling](theme/styling.md) — embedded CSS architecture
