@@ -24,6 +24,8 @@ almost no theming.
 - `body` centers the reading column and sets the measure
 - `nav ul`, `.post-list`, `.latest-list`, `.pagination`, `.social`, and
   `.links` remove list markers
+- `.page-link` keeps pagination touch targets at 48px; redundant first/last and
+  disabled pagination controls are hidden
 - `pre` scrolls horizontally instead of breaking the layout and uses a light
   background with a thin black border
 - `img` scales down responsively
